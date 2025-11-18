@@ -222,29 +222,33 @@ class ToolService:
         try:
             for provider_name, provider_config in config_service.app_config.items():
                 # register all tools by api provider with api key
-                if provider_config.get("api_key", ""):
+                if provider_config.get("api_key", ""):  # 检查提供商API密钥是否存在
                     for tool_id, tool_info in TOOL_MAPPING.items():
-                        if tool_info.get("provider") == provider_name:
-                            self.register_tool(tool_id, tool_info)
+                        if (
+                            tool_info.get("provider") == provider_name
+                        ):  # 检查工具提供商是否与提供商名称匹配
+                            self.register_tool(tool_id, tool_info)  # 注册工具
             # Register comfyui workflow tools
-            if config_service.app_config.get("comfyui", {}).get("url", ""):
-                await register_comfy_tools()
+            if config_service.app_config.get("comfyui", {}).get(
+                "url", ""
+            ):  # 检查ComfyUI URL是否存在
+                await register_comfy_tools()  # 注册ComfyUI工作流工具
         except Exception as e:
-            print(f"❌ Failed to initialize tool service: {e}")
+            print(f"❌ Failed to initialize tool service: {e}")  # 打印错误信息
             traceback.print_stack()
 
     def get_tool(self, tool_name: str) -> BaseTool | None:
-        tool_info = self.tools.get(tool_name)
-        return tool_info.get("tool_function") if tool_info else None
+        tool_info = self.tools.get(tool_name)  # 获取工具信息
+        return tool_info.get("tool_function") if tool_info else None  # 返回工具函数
 
     def remove_tool(self, tool_id: str):
-        self.tools.pop(tool_id)
+        self.tools.pop(tool_id)  # 删除工具
 
     def get_all_tools(self) -> Dict[str, ToolInfo]:
-        return self.tools.copy()
+        return self.tools.copy()  # 返回所有工具信息
 
     def clear_tools(self):
-        self.tools.clear()
+        self.tools.clear()  # 清空工具
         # 重新注册必须的工具
         self._register_required_tools()
 
