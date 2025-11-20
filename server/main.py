@@ -10,15 +10,15 @@ from routers.websocket_router import *  # DO NOT DELETE THIS LINE, OTHERWISE, WE
 
 print('Importing routers')
 from routers import (
-    config_router,
-    image_router,
+    config_router,  # 配置路由
+    image_router,  # 图片路由
     root_router,
-    workspace,
-    canvas,
+    workspace,  # 工作空间路由
+    canvas,  # 画布路由
     ssl_test,
-    chat_router,
+    chat_router,  # 聊天路由
     settings,
-    tool_confirmation,
+    tool_confirmation,  # 工具确认路由
 )
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles

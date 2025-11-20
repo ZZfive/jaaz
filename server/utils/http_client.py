@@ -51,13 +51,13 @@ class HttpClient:
         """获取 httpx 客户端配置"""
 
         config = {
-            'verify': cls._get_ssl_context(),
-            'timeout': 300,
-            'follow_redirects': True,
+            'verify': cls._get_ssl_context(),  # SSL上下文
+            'timeout': 300,  # 超时时间
+            'follow_redirects': True,  # 自动跟随重定向
             'limits': httpx.Limits(
                 max_keepalive_connections=0, max_connections=200, keepalive_expiry=30
-            ),
-            **kwargs,
+            ),  # 禁用连接保持，每次请求后关闭连接；最大并发连接数200；连接保持30秒后过期
+            **kwargs,  # 其他配置
         }
 
         return config
@@ -70,9 +70,9 @@ class HttpClient:
         config = {
             'connector': aiohttp.TCPConnector(
                 ssl=cls._get_ssl_context(),
-                limit=200,
-                limit_per_host=50,
-                keepalive_timeout=0,
+                limit=200,  # 全局最大连接数200，与httpx一致
+                limit_per_host=50,  # 单个主机最大连接数50
+                keepalive_timeout=0,  # 禁用连接保持
             ),
             'timeout': aiohttp.ClientTimeout(total=300),
             'trust_env': trust_env,  # 启用环境变量代理支持
@@ -84,7 +84,7 @@ class HttpClient:
     # ========== 工厂方法 ==========
 
     @classmethod
-    @asynccontextmanager
+    @asynccontextmanager  # 异步上下文管理器，自动管理客户端的生命周期，关闭客户端
     async def create(
         cls, url: Optional[str] = None, **kwargs: Any
     ) -> AsyncGenerator[httpx.AsyncClient, None]:

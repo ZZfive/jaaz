@@ -31,19 +31,23 @@ async def quick_ssl_test():
             return {
                 'ssl_working': response.status_code == 200,
                 'status_code': response.status_code,
-                'message': 'SSL configuration is working' if response.status_code == 200 else f'Unexpected status: {response.status_code}'
+                'message': (
+                    'SSL configuration is working'
+                    if response.status_code == 200
+                    else f'Unexpected status: {response.status_code}'
+                ),
             }
     except ssl.SSLError as e:
         return {
             'ssl_working': False,
             'error': 'SSL_ERROR',
-            'message': f'SSL certificate verification failed: {str(e)}'
+            'message': f'SSL certificate verification failed: {str(e)}',
         }
     except Exception as e:
         return {
             'ssl_working': False,
             'error': 'CONNECTION_ERROR',
-            'message': f'Connection failed: {str(e)}'
+            'message': f'Connection failed: {str(e)}',
         }
 
 
@@ -57,7 +61,7 @@ async def test_ssl_endpoint():
         return {
             'ssl_working': False,
             'error': 'TEST_ERROR',
-            'message': f'SSL test failed: {str(e)}'
+            'message': f'SSL test failed: {str(e)}',
         }
 
 
@@ -67,16 +71,19 @@ async def test_ssl_configuration():
     is_bundled = getattr(sys, 'frozen', False)
 
     def log_result(test_name, success, message, details=None):
-        test_results.append({
-            'test': test_name,
-            'success': success,
-            'message': message,
-            'details': details or {}
-        })
+        test_results.append(
+            {
+                'test': test_name,
+                'success': success,
+                'message': message,
+                'details': details or {},
+            }
+        )
 
     # Test 1: Environment check
     try:
         import certifi
+
         ca_path = certifi.where()
         ca_exists = os.path.exists(ca_path)
         ca_size = os.path.getsize(ca_path) if ca_exists else 0
@@ -89,8 +96,8 @@ async def test_ssl_configuration():
                 'path': ca_path,
                 'exists': ca_exists,
                 'size': f"{ca_size} bytes" if ca_exists else "N/A",
-                'is_bundled': is_bundled
-            }
+                'is_bundled': is_bundled,
+            },
         )
     except Exception as e:
         log_result("Certifi Package", False, f"Error: {str(e)}")
@@ -104,8 +111,8 @@ async def test_ssl_configuration():
             "SSL context created successfully",
             {
                 'protocol': str(ssl_context.protocol),
-                'verify_mode': str(ssl_context.verify_mode)
-            }
+                'verify_mode': str(ssl_context.verify_mode),
+            },
         )
         ssl_context_ok = True
     except Exception as e:
@@ -131,10 +138,7 @@ async def test_ssl_configuration():
             "httpx Client Creation",
             True,
             "httpx client with SSL created successfully",
-            {
-                'client_type': str(type(httpx_client)),
-                'verify_info': verify_info
-            }
+            {'client_type': str(type(httpx_client)), 'verify_info': verify_info},
         )
         httpx_client.close()  # Clean up
         httpx_ok = True
@@ -147,7 +151,7 @@ async def test_ssl_configuration():
         test_urls = [
             'https://httpbin.org/get',
             'https://www.google.com',
-            'https://api.github.com'
+            'https://api.github.com',
         ]
 
         https_ok = False
@@ -160,7 +164,7 @@ async def test_ssl_configuration():
                         f"HTTPS Test ({url})",
                         success,
                         f"Status: {response.status_code}",
-                        {'url': str(response.url)}
+                        {'url': str(response.url)},
                     )
                     if success:
                         https_ok = True
@@ -177,13 +181,12 @@ async def test_ssl_configuration():
                     "Replicate API SSL",
                     success,
                     f"SSL verification {'successful' if success else 'failed'} (Status: {response.status_code})",
-                    {'status_code': response.status_code}
+                    {'status_code': response.status_code},
                 )
         except ssl.SSLError as e:
             log_result("Replicate API SSL", False, f"SSL Error: {str(e)}")
         except Exception as e:
-            log_result("Replicate API SSL", False,
-                       f"Connection Error: {str(e)}")
+            log_result("Replicate API SSL", False, f"Connection Error: {str(e)}")
 
     # Test 5: Basic httpx connectivity test
     if httpx_ok:
@@ -196,13 +199,12 @@ async def test_ssl_configuration():
                     "httpx HTTPS Test",
                     success,
                     f"httpx SSL connection {'successful' if success else 'failed'} (Status: {response.status_code})",
-                    {'status_code': response.status_code}
+                    {'status_code': response.status_code},
                 )
         except ssl.SSLError as e:
             log_result("httpx HTTPS Test", False, f"SSL Error: {str(e)}")
         except Exception as e:
-            log_result("httpx HTTPS Test", False,
-                       f"Connection Error: {str(e)}")
+            log_result("httpx HTTPS Test", False, f"Connection Error: {str(e)}")
 
     # Test 6: OpenAI API connectivity using httpx (for ChatOpenAI)
     if httpx_ok:
@@ -218,9 +220,13 @@ async def test_ssl_configuration():
                 if response.status_code == 421:
                     message = "SSL verification successful (HTTP/2 misdirected request - normal)"
                 elif response.status_code in [200, 401, 403, 404]:
-                    message = f"SSL verification successful (Status: {response.status_code})"
+                    message = (
+                        f"SSL verification successful (Status: {response.status_code})"
+                    )
                 else:
-                    message = f"SSL verification failed (Status: {response.status_code})"
+                    message = (
+                        f"SSL verification failed (Status: {response.status_code})"
+                    )
 
                 log_result(
                     "OpenAI API SSL (httpx)",
@@ -228,14 +234,17 @@ async def test_ssl_configuration():
                     message,
                     {
                         'status_code': response.status_code,
-                        'note': '421 status is normal for OpenAI API with HTTP/1.1' if response.status_code == 421 else None
-                    }
+                        'note': (
+                            '421 status is normal for OpenAI API with HTTP/1.1'
+                            if response.status_code == 421
+                            else None
+                        ),
+                    },
                 )
         except ssl.SSLError as e:
             log_result("OpenAI API SSL (httpx)", False, f"SSL Error: {str(e)}")
         except Exception as e:
-            log_result("OpenAI API SSL (httpx)", False,
-                       f"Connection Error: {str(e)}")
+            log_result("OpenAI API SSL (httpx)", False, f"Connection Error: {str(e)}")
 
     # Generate summary
     total_tests = len(test_results)
@@ -257,8 +266,8 @@ async def test_ssl_configuration():
         'environment': {
             'python_version': sys.version,
             'is_bundled': is_bundled,
-            'bundle_path': getattr(sys, '_MEIPASS', None) if is_bundled else None
-        }
+            'bundle_path': getattr(sys, '_MEIPASS', None) if is_bundled else None,
+        },
     }
 
 
@@ -269,10 +278,7 @@ async def test_ssl_full_endpoint():
         result = await test_ssl_configuration()
         return result
     except Exception as e:
-        return {
-            'status': 'error',
-            'message': f'SSL test failed: {str(e)}'
-        }
+        return {'status': 'error', 'message': f'SSL test failed: {str(e)}'}
 
 
 @router.get("/ssl_status")
@@ -303,22 +309,12 @@ async def ssl_status_endpoint():
             'environment': {
                 'python_version': sys.version,
                 'is_bundled': is_bundled,
-                'bundle_path': getattr(sys, '_MEIPASS', None) if is_bundled else None
+                'bundle_path': getattr(sys, '_MEIPASS', None) if is_bundled else None,
             },
-            'certifi': {
-                'ca_path': ca_path,
-                'ca_exists': ca_exists,
-                'ca_size': ca_size
-            },
-            'ssl_context': {
-                'creation_ok': ssl_context_ok,
-                'error': ssl_error
-            },
-            'overall_status': 'ok' if ssl_context_ok and ca_exists else 'error'
+            'certifi': {'ca_path': ca_path, 'ca_exists': ca_exists, 'ca_size': ca_size},
+            'ssl_context': {'creation_ok': ssl_context_ok, 'error': ssl_error},
+            'overall_status': 'ok' if ssl_context_ok and ca_exists else 'error',
         }
 
     except Exception as e:
-        return {
-            'overall_status': 'error',
-            'error': str(e)
-        }
+        return {'overall_status': 'error', 'error': str(e)}

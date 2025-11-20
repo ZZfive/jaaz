@@ -8,7 +8,8 @@ class V3AddComfyWorkflow(Migration):
 
     def up(self, conn: sqlite3.Connection) -> None:
         # Create comfy workflow table
-        conn.execute("""
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS comfy_workflows (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -19,13 +20,14 @@ class V3AddComfyWorkflow(Migration):
                 created_at TEXT DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')),
                 updated_at TEXT DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now'))
             )
-        """)
+        """
+        )  # 创建ComfyUI工作流表
 
-        conn.execute("""
+        conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_comfy_workflows_updated_at ON comfy_workflows(updated_at DESC, id DESC)
-        """)
+        """
+        )  # 创建ComfyUI工作流表索引
 
-
-
-    def down(self, conn: sqlite3.Connection) -> None:
+    def down(self, conn: sqlite3.Connection) -> None:  # 回滚数据库结构
         pass

@@ -22,31 +22,51 @@ ALL_MIGRATIONS = [
         'migration': V3AddComfyWorkflow,
     },
 ]
+
+
 class MigrationManager:
-    def get_migrations_to_apply(self, current_version: int, target_version: int) -> List[Type[Migration]]:
+    def get_migrations_to_apply(
+        self, current_version: int, target_version: int
+    ) -> List[Type[Migration]]:
         """Get list of migrations to apply"""
-        return [m for m in ALL_MIGRATIONS
-                if m['version'] > current_version and m['version'] <= target_version]
+        return [
+            m
+            for m in ALL_MIGRATIONS
+            if m['version'] > current_version and m['version'] <= target_version
+        ]
 
-    def get_migrations_to_rollback(self, current_version: int, target_version: int) -> List[Type[Migration]]:
+    def get_migrations_to_rollback(
+        self, current_version: int, target_version: int
+    ) -> List[Type[Migration]]:
         """Get list of migrations to rollback"""
-        return [m for m in reversed(ALL_MIGRATIONS)
-                if m['version'] <= current_version and m['version'] > target_version]
+        return [
+            m
+            for m in reversed(ALL_MIGRATIONS)
+            if m['version'] <= current_version and m['version'] > target_version
+        ]
 
-    def migrate(self, conn: sqlite3.Connection, from_version: int, to_version: int) -> None:
+    def migrate(
+        self, conn: sqlite3.Connection, from_version: int, to_version: int
+    ) -> None:
         """Apply or rollback migrations to reach target version"""
-        if from_version < to_version:
+        if from_version < to_version:  # 如果当前版本小于目标版本，则应用迁移
             # Apply migrations forward
             print('🦄 Applying migrations forward', from_version, '->', to_version)
-            migrations_to_apply = self.get_migrations_to_apply(from_version, to_version)
+            migrations_to_apply = self.get_migrations_to_apply(
+                from_version, to_version
+            )  # 获取需要应用的迁移
             print('🦄 Migrations to apply', migrations_to_apply)
             for migration in migrations_to_apply:
-                migration_class = migration['migration']
-                migration = migration_class()
-                print(f"Applying migration {migration.version}: {migration.description}")
-                migration.up(conn)
-                conn.execute("UPDATE db_version SET version = ?", (migration.version,))
-        # Do not do rollback migrations
+                migration_class = migration['migration']  # 获取迁移类
+                migration = migration_class()  # 创建迁移实例
+                print(
+                    f"Applying migration {migration.version}: {migration.description}"
+                )  # 打印迁移信息
+                migration.up(conn)  # 应用迁移
+                conn.execute(
+                    "UPDATE db_version SET version = ?", (migration.version,)
+                )  # 更新数据库版本
+        # Do not do rollback migrations 不进行回滚迁移
         # else:
         #     # Rollback migrations
         #     print('🦄 Rolling back migrations', from_version, '->', to_version)
@@ -56,4 +76,4 @@ class MigrationManager:
         #         migration = migration_class()
         #         print(f"Rolling back migration {migration.version}: {migration.description}")
         #         migration.down(conn)
-        #         conn.execute("UPDATE db_version SET version = ?", (migration.version - 1,)) 
+        #         conn.execute("UPDATE db_version SET version = ?", (migration.version - 1,))

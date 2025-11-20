@@ -1,8 +1,10 @@
 from typing import Protocol
 import sqlite3
 
-class Migration(Protocol):
+
+class Migration(Protocol):  # 迁移协议
     """Migration protocol"""
+
     version: int
     description: str
 
@@ -12,4 +14,4 @@ class Migration(Protocol):
 
     def down(self, conn: sqlite3.Connection) -> None:
         """Rollback the migration"""
-        ... 
+        ...
