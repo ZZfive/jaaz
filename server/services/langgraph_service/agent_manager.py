@@ -3,7 +3,9 @@ from langgraph.prebuilt import create_react_agent  # type: ignore
 from langgraph.graph.graph import CompiledGraph
 from langchain_core.tools import BaseTool
 from models.tool_model import ToolInfoJson
-from services.langgraph_service.configs.image_vide_creator_config import ImageVideoCreatorAgentConfig
+from services.langgraph_service.configs.image_vide_creator_config import (
+    ImageVideoCreatorAgentConfig,
+)
 from .configs import PlannerAgentConfig, create_handoff_tool, BaseAgentConfig
 from services.tool_service import tool_service
 
@@ -16,9 +18,7 @@ class AgentManager:
 
     @staticmethod
     def create_agents(
-        model: Any,
-        tool_list: List[ToolInfoJson],
-        system_prompt: str = ""
+        model: Any, tool_list: List[ToolInfoJson], system_prompt: str = ""
     ) -> List[CompiledGraph]:
         """创建所有智能体
 
@@ -31,7 +31,7 @@ class AgentManager:
             List[Any]: 创建好的智能体列表
         """
         # 为不同类型的智能体过滤合适的工具
-        image_tools =  [tool for tool in tool_list if tool.get('type') == 'image']
+        image_tools = [tool for tool in tool_list if tool.get('type') == 'image']
         video_tools = [tool for tool in tool_list if tool.get('type') == 'video']
 
         print(f"📸 图像工具: {image_tools}")
@@ -39,7 +39,8 @@ class AgentManager:
 
         planner_config = PlannerAgentConfig()
         planner_agent = AgentManager._create_langgraph_agent(
-            model, planner_config)
+            model, planner_config
+        )  # 创建规划器智能体
 
         # image_designer_config = ImageDesignerAgentConfig(
         #     image_tools, system_prompt)
@@ -55,15 +56,13 @@ class AgentManager:
 
         image_video_creator_config = ImageVideoCreatorAgentConfig(tool_list)
         image_video_creator_agent = AgentManager._create_langgraph_agent(
-            model, image_video_creator_config)
+            model, image_video_creator_config
+        )
 
         return [planner_agent, image_video_creator_agent]
 
     @staticmethod
-    def _create_langgraph_agent(
-        model: Any,
-        config: BaseAgentConfig
-    ) -> CompiledGraph:
+    def _create_langgraph_agent(model: Any, config: BaseAgentConfig) -> CompiledGraph:
         """根据配置创建单个 LangGraph 智能体
 
         Args:
@@ -79,7 +78,7 @@ class AgentManager:
             handoff_tool = create_handoff_tool(
                 agent_name=handoff['agent_name'],
                 description=handoff['description'],
-            )
+            )  # 创建智能体间切换工具
             if handoff_tool:
                 handoff_tools.append(handoff_tool)
 
@@ -95,13 +94,12 @@ class AgentManager:
             name=config.name,
             model=model,
             tools=[*business_tools, *handoff_tools],
-            prompt=config.system_prompt
+            prompt=config.system_prompt,
         )
 
     @staticmethod
     def get_last_active_agent(
-        messages: List[Dict[str, Any]],
-        agent_names: List[str]
+        messages: List[Dict[str, Any]], agent_names: List[str]
     ) -> Optional[str]:
         """获取最后活跃的智能体
 

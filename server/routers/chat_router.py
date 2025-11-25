@@ -1,4 +1,4 @@
-#server/routers/chat_router.py
+# server/routers/chat_router.py
 from fastapi import APIRouter, Request
 from services.chat_service import handle_chat
 from services.magic_service import handle_magic
@@ -7,8 +7,9 @@ from typing import Dict
 
 router = APIRouter(prefix="/api")
 
+
 @router.post("/chat")
-async def chat(request: Request):
+async def chat(request: Request):  # 处理聊天请求
     """
     Endpoint to handle chat requests.
 
@@ -25,8 +26,9 @@ async def chat(request: Request):
     await handle_chat(data)
     return {"status": "done"}
 
+
 @router.post("/cancel/{session_id}")
-async def cancel_chat(session_id: str):
+async def cancel_chat(session_id: str):  # 取消正在处理的流式任务
     """
     Endpoint to cancel an ongoing stream task for a given session_id.
 
@@ -45,8 +47,9 @@ async def cancel_chat(session_id: str):
         return {"status": "cancelled"}
     return {"status": "not_found_or_done"}
 
+
 @router.post("/magic")
-async def magic(request: Request):
+async def magic(request: Request):  # 处理魔法生成请求
     """
     Endpoint to handle magic generation requests.
 
@@ -63,8 +66,9 @@ async def magic(request: Request):
     await handle_magic(data)
     return {"status": "done"}
 
+
 @router.post("/magic/cancel/{session_id}")
-async def cancel_magic(session_id: str) -> Dict[str, str]:
+async def cancel_magic(session_id: str) -> Dict[str, str]:  # 取消正在处理的魔法生成任务
     """
     Endpoint to cancel an ongoing magic generation task for a given session_id.
 

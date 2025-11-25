@@ -51,25 +51,38 @@ async def handle_chat(data: Dict[str, Any]) -> None:
         # create new session
         prompt = messages[0].get('content', '')
         # TODO: Better way to determin when to create new chat session.
-        await db_service.create_chat_session(session_id, text_model.get('model'), text_model.get('provider'), canvas_id, (prompt[:200] if isinstance(prompt, str) else ''))
+        await db_service.create_chat_session(
+            session_id,
+            text_model.get('model'),
+            text_model.get('provider'),
+            canvas_id,
+            (prompt[:200] if isinstance(prompt, str) else ''),
+        )
 
-    await db_service.create_message(session_id, messages[-1].get('role', 'user'), json.dumps(messages[-1])) if len(messages) > 0 else None
+    (
+        await db_service.create_message(
+            session_id, messages[-1].get('role', 'user'), json.dumps(messages[-1])
+        )
+        if len(messages) > 0
+        else None
+    )
 
     # Create and start langgraph_agent task for chat processing
-    task = asyncio.create_task(langgraph_multi_agent(
-        messages, canvas_id, session_id, text_model, tool_list, system_prompt))
+    task = asyncio.create_task(
+        langgraph_multi_agent(
+            messages, canvas_id, session_id, text_model, tool_list, system_prompt
+        )
+    )  # 创建基于LangGraph的多智能体任务
 
     # Register the task in stream_tasks (for possible cancellation)
-    add_stream_task(session_id, task)
+    add_stream_task(session_id, task)  # 注册任务到stream_tasks，用于可能的取消
     try:
         # Await completion of the langgraph_agent task
-        await task
+        await task  # 等待任务完成
     except asyncio.exceptions.CancelledError:
         print(f"🛑Session {session_id} cancelled during stream")
     finally:
         # Always remove the task from stream_tasks after completion/cancellation
-        remove_stream_task(session_id)
+        remove_stream_task(session_id)  # 从stream_tasks中移除任务
         # Notify frontend WebSocket that chat processing is done
-        await send_to_websocket(session_id, {
-            'type': 'done'
-        })
+        await send_to_websocket(session_id, {'type': 'done'})  # 通知前端任务完成

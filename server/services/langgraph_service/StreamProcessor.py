@@ -1,7 +1,12 @@
 # type: ignore[import]
 import traceback
 from typing import Optional, List, Dict, Any, Callable, Awaitable
-from langchain_core.messages import AIMessageChunk, ToolCall, convert_to_openai_messages, ToolMessage
+from langchain_core.messages import (
+    AIMessageChunk,
+    ToolCall,
+    convert_to_openai_messages,
+    ToolMessage,
+)
 from langgraph.graph import StateGraph
 import json
 
@@ -9,15 +14,22 @@ import json
 class StreamProcessor:
     """流式处理器 - 负责处理智能体的流式输出"""
 
-    def __init__(self, session_id: str, db_service: Any, websocket_service: Callable[[str, Dict[str, Any]], Awaitable[None]]):
+    def __init__(
+        self,
+        session_id: str,
+        db_service: Any,
+        websocket_service: Callable[[str, Dict[str, Any]], Awaitable[None]],
+    ):
         self.session_id = session_id
         self.db_service = db_service
         self.websocket_service = websocket_service
         self.tool_calls: List[ToolCall] = []
-        self.last_saved_message_index = 0
-        self.last_streaming_tool_call_id: Optional[str] = None
+        self.last_saved_message_index = 0  # 上次保存消息的索引
+        self.last_streaming_tool_call_id: Optional[str] = None  # 上次流式工具调用的ID
 
-    async def process_stream(self, swarm: StateGraph, messages: List[Dict[str, Any]], context: Dict[str, Any]) -> None:
+    async def process_stream(
+        self, swarm: StateGraph, messages: List[Dict[str, Any]], context: Dict[str, Any]
+    ) -> None:
         """处理整个流式响应
 
         Args:
@@ -25,21 +37,21 @@ class StreamProcessor:
             messages: 消息列表
             context: 上下文信息
         """
-        self.last_saved_message_index = len(messages) - 1
+        self.last_saved_message_index = (
+            len(messages) - 1
+        )  # 设置上次保存消息的索引为消息列表的最后一个消息
 
-        compiled_swarm = swarm.compile()
+        compiled_swarm = swarm.compile()  # 编译智能体群组
 
         async for chunk in compiled_swarm.astream(
             {"messages": messages},
             config=context,
-            stream_mode=["messages", "custom", 'values']
-        ):
+            stream_mode=["messages", "custom", 'values'],
+        ):  # 此处的流式处理就已经是在执行智能体群组，chunk就是返回的流式事件结果
             await self._handle_chunk(chunk)
 
         # 发送完成事件
-        await self.websocket_service(self.session_id, {
-            'type': 'done'
-        })
+        await self.websocket_service(self.session_id, {'type': 'done'})
 
     async def _handle_chunk(self, chunk: Any) -> None:
         # print('👇chunk', chunk)
@@ -54,16 +66,17 @@ class StreamProcessor:
     async def _handle_values_chunk(self, chunk_data: Dict[str, Any]) -> None:
         """处理 values 类型的 chunk"""
         all_messages = chunk_data.get('messages', [])
-        oai_messages = convert_to_openai_messages(all_messages)
+        oai_messages = convert_to_openai_messages(
+            all_messages
+        )  # 将LangChain消息转换为OpenAI消息
         # 确保 oai_messages 是列表类型
         if not isinstance(oai_messages, list):
             oai_messages = [oai_messages] if oai_messages else []
 
         # 发送所有消息到前端
-        await self.websocket_service(self.session_id, {
-            'type': 'all_messages',
-            'messages': oai_messages
-        })
+        await self.websocket_service(
+            self.session_id, {'type': 'all_messages', 'messages': oai_messages}
+        )
 
         # 保存新消息到数据库
         for i in range(self.last_saved_message_index + 1, len(oai_messages)):
@@ -72,7 +85,7 @@ class StreamProcessor:
                 await self.db_service.create_message(
                     self.session_id,
                     new_message.get('role', 'user'),
-                    json.dumps(new_message)
+                    json.dumps(new_message),
                 )
             self.last_saved_message_index = i
 
@@ -86,18 +99,24 @@ class StreamProcessor:
                 # 工具调用结果之后会在 values 类型中发送到前端，这里会更快出现一些
                 oai_message = convert_to_openai_messages([ai_message_chunk])[0]
                 print('👇toolcall res oai_message', oai_message)
-                await self.websocket_service(self.session_id, {
-                    'type': 'tool_call_result',
-                    'id': ai_message_chunk.tool_call_id,
-                    'message': oai_message
-                })
+                await self.websocket_service(
+                    self.session_id,
+                    {
+                        'type': 'tool_call_result',
+                        'id': ai_message_chunk.tool_call_id,
+                        'message': oai_message,
+                    },
+                )
             elif content:
                 # 发送文本内容
-                await self.websocket_service(self.session_id, {
-                    'type': 'delta',
-                    'text': content
-                })
-            elif hasattr(ai_message_chunk, 'tool_calls') and ai_message_chunk.tool_calls and ai_message_chunk.tool_calls[0].get('name'):
+                await self.websocket_service(
+                    self.session_id, {'type': 'delta', 'text': content}
+                )
+            elif (
+                hasattr(ai_message_chunk, 'tool_calls')
+                and ai_message_chunk.tool_calls
+                and ai_message_chunk.tool_calls[0].get('name')
+            ):
                 # 处理工具调用
                 await self._handle_tool_calls(ai_message_chunk.tool_calls)
 
@@ -131,15 +150,19 @@ class StreamProcessor:
             if tool_name in TOOLS_REQUIRING_CONFIRMATION:
                 # 对于需要确认的工具，不在这里发送事件，让工具函数自己处理
                 print(
-                    f'🔄 Tool {tool_name} requires confirmation, skipping StreamProcessor event')
+                    f'🔄 Tool {tool_name} requires confirmation, skipping StreamProcessor event'
+                )
                 continue
             else:
-                await self.websocket_service(self.session_id, {
-                    'type': 'tool_call',
-                    'id': tool_call.get('id'),
-                    'name': tool_name,
-                    'arguments': '{}'
-                })
+                await self.websocket_service(
+                    self.session_id,
+                    {
+                        'type': 'tool_call',
+                        'id': tool_call.get('id'),
+                        'name': tool_name,
+                        'arguments': '{}',
+                    },
+                )
 
     async def _handle_tool_call_chunks(self, tool_call_chunks: List[Any]) -> None:
         """处理工具调用参数流"""
@@ -149,10 +172,13 @@ class StreamProcessor:
                 self.last_streaming_tool_call_id = tool_call_chunk.get('id')
             else:
                 if self.last_streaming_tool_call_id:
-                    await self.websocket_service(self.session_id, {
-                        'type': 'tool_call_arguments',
-                        'id': self.last_streaming_tool_call_id,
-                        'text': tool_call_chunk.get('args')
-                    })
+                    await self.websocket_service(
+                        self.session_id,
+                        {
+                            'type': 'tool_call_arguments',
+                            'id': self.last_streaming_tool_call_id,
+                            'text': tool_call_chunk.get('args'),
+                        },
+                    )
                 else:
                     print('🟠no last_streaming_tool_call_id', tool_call_chunk)
