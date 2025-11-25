@@ -15,6 +15,7 @@ from services.websocket_service import broadcast_session_update
 from services.websocket_service import send_to_websocket
 from utils.canvas import find_next_best_element_position
 
+
 def generate_file_id() -> str:
     """Generate unique file ID"""
     return 'im_' + generate(size=8)
@@ -29,15 +30,14 @@ class CanvasLockManager:
     @asynccontextmanager
     async def lock_canvas(self, canvas_id: str):
         if canvas_id not in self._locks:
-            self._locks[canvas_id] = asyncio.Lock()
+            self._locks[canvas_id] = asyncio.Lock()  # 创建锁
 
         async with self._locks[canvas_id]:
-            yield
+            yield  # 释放锁
 
 
 # Global lock manager instance
 canvas_lock_manager = CanvasLockManager()
-
 
 
 async def generate_new_image_element(
@@ -48,17 +48,17 @@ async def generate_new_image_element(
 ) -> Dict[str, Any]:
     """Generate new image element for canvas"""
     if canvas_data is None:
-        canvas = await db_service.get_canvas_data(canvas_id)
+        canvas = await db_service.get_canvas_data(canvas_id)  # 获取画布数据
         if canvas is None:
-            canvas = {"data": {}}
-        canvas_data = canvas.get("data", {})
+            canvas = {"data": {}}  # 如果画布数据为空，则创建一个空的数据
+        canvas_data = canvas.get("data", {})  # 获取画布数据中的data部分
 
-
-
-    new_x, new_y = await find_next_best_element_position(canvas_data)
+    new_x, new_y = await find_next_best_element_position(
+        canvas_data
+    )  # 计算新元素的x、y坐标，确保新元素不会与其他元素重叠
 
     return {
-        "type": "image",
+        "type": "image",  # 新元素的类型为image
         "id": fileid,
         "x": new_x,
         "y": new_y,
@@ -91,7 +91,14 @@ async def generate_new_image_element(
     }
 
 
-async def save_image_to_canvas(session_id: str, canvas_id: str, filename: str, mime_type: str, width: int, height: int) -> str:
+async def save_image_to_canvas(
+    session_id: str,
+    canvas_id: str,
+    filename: str,
+    mime_type: str,
+    width: int,
+    height: int,
+) -> str:
     """Save image to canvas with proper locking and positioning"""
     # Use lock to ensure atomicity of the save process
     async with canvas_lock_manager.lock_canvas(canvas_id):
@@ -107,8 +114,8 @@ async def save_image_to_canvas(session_id: str, canvas_id: str, filename: str, m
         if 'files' not in canvas_data:
             canvas_data['files'] = {}
 
-        file_id = generate_file_id()
-        url = f'/api/file/{filename}'
+        file_id = generate_file_id()  # 生成文件ID
+        url = f'/api/file/{filename}'  # 生成文件URL
 
         file_data: Dict[str, Any] = {
             'mimeType': mime_type,
@@ -124,41 +131,51 @@ async def save_image_to_canvas(session_id: str, canvas_id: str, filename: str, m
                 'width': width,
                 'height': height,
             },
-            canvas_data
+            canvas_data,
         )
 
         # Update the canvas data with the new element and file info
-        elements_list = cast(List[Dict[str, Any]], canvas_data['elements'])
-        elements_list.append(new_image_element)
+        elements_list = cast(
+            List[Dict[str, Any]], canvas_data['elements']
+        )  # 告诉类型检查器，canvas_data['elements']是一个List[Dict[str, Any]]，返回的对象是canvas_data['elements']的引用
+        elements_list.append(
+            new_image_element
+        )  # 将新元素添加到画布数据中；因为elements_list是canvas_data['elements']的引用，所以canvas_data['elements']也会被更新
         canvas_data['files'][file_id] = file_data
 
         image_url = f"/api/file/{filename}"
 
         # Save the updated canvas data back to the database
-        await db_service.save_canvas_data(canvas_id, json.dumps(canvas_data))
+        await db_service.save_canvas_data(
+            canvas_id, json.dumps(canvas_data)
+        )  # 保存画布数据
 
         # Broadcast image generation message to frontend
-        await broadcast_session_update(session_id, canvas_id, {
-            'type': 'image_generated',
-            'element': new_image_element,
-            'file': file_data,
-            'image_url': image_url,
-        })
+        await broadcast_session_update(
+            session_id,
+            canvas_id,
+            {
+                'type': 'image_generated',
+                'element': new_image_element,
+                'file': file_data,
+                'image_url': image_url,
+            },
+        )
 
-        return image_url
+        return image_url  # 返回图片URL
 
 
-async def send_image_start_notification(session_id: str, message: str) -> None:
+async def send_image_start_notification(
+    session_id: str, message: str
+) -> None:  # 通知前端图片生成开始
     """Send image generation start notification"""
-    await send_to_websocket(session_id, {
-        'type': 'image_generation_start',
-        'message': message
-    })
+    await send_to_websocket(
+        session_id, {'type': 'image_generation_start', 'message': message}
+    )
 
 
-async def send_image_error_notification(session_id: str, error_message: str) -> None:
+async def send_image_error_notification(
+    session_id: str, error_message: str
+) -> None:  # 通知前端图片生成错误
     """Send image generation error notification"""
-    await send_to_websocket(session_id, {
-        'type': 'error',
-        'error': error_message
-    })
+    await send_to_websocket(session_id, {'type': 'error', 'error': error_message})

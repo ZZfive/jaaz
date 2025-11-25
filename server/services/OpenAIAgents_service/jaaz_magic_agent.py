@@ -4,14 +4,16 @@ from typing import Dict, Any, List
 import asyncio
 import os
 from nanoid import generate
-from tools.utils.image_canvas_utils import save_image_to_canvas
-from tools.utils.image_utils import get_image_info_and_save
+from tools.utils.image_canvas_utils import save_image_to_canvas  # 保存图片到画布
+from tools.utils.image_utils import get_image_info_and_save  # 获取图片信息并保存
 from services.config_service import FILES_DIR
-from common import DEFAULT_PORT
-from ..jaaz_service import JaazService
+from common import DEFAULT_PORT  # 默认端口
+from ..jaaz_service import JaazService  # Jaaz自行维护的图片、视频生成服务
 
 
-async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str = "", canvas_id: str = "") -> Dict[str, Any]:
+async def create_jaaz_response(
+    messages: List[Dict[str, Any]], session_id: str = "", canvas_id: str = ""
+) -> Dict[str, Any]:
     """
     基于云端服务的图像生成响应函数
     实现和 magic_agent 相同的功能
@@ -24,19 +26,13 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
         if isinstance(user_message.get('content'), list):
             for content_item in user_message['content']:
                 if content_item.get('type') == 'image_url':
-                    image_content = content_item.get(
-                        'image_url', {}).get('url', "")
+                    image_content = content_item.get('image_url', {}).get('url', "")
                     break
 
         if not image_content:
             return {
                 'role': 'assistant',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': '✨ not found input image'
-                    }
-                ]
+                'content': [{'type': 'text', 'text': '✨ not found input image'}],
             }
 
         # 创建 Jaaz 服务实例
@@ -47,11 +43,8 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
             return {
                 'role': 'assistant',
                 'content': [
-                    {
-                        'type': 'text',
-                        'text': '✨ Cloud API Key not configured'
-                    }
-                ]
+                    {'type': 'text', 'text': '✨ Cloud API Key not configured'}
+                ],
             }
 
         # 调用 Jaaz 服务生成魔法图像
@@ -59,12 +52,7 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
         if not result:
             return {
                 'role': 'assistant',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': '✨ Magic generation failed'
-                    }
-                ]
+                'content': [{'type': 'text', 'text': '✨ Magic generation failed'}],
             }
 
         # 检查是否有错误
@@ -74,11 +62,8 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
             return {
                 'role': 'assistant',
                 'content': [
-                    {
-                        'type': 'text',
-                        'text': f'✨ Magic Generation Error: {error_msg}'
-                    }
-                ]
+                    {'type': 'text', 'text': f'✨ Magic Generation Error: {error_msg}'}
+                ],
             }
 
         # 检查是否有结果 URL
@@ -88,9 +73,9 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
                 'content': [
                     {
                         'type': 'text',
-                        'text': '✨ Magic generation failed: No result URL'
+                        'text': '✨ Magic generation failed: No result URL',
                     }
-                ]
+                ],
             }
 
         # 初始化变量
@@ -117,14 +102,16 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
                 filename = f'{file_id}.{extension}'
 
                 # 保存图片到画布
-                image_url = await save_image_to_canvas(session_id, canvas_id, filename, mime_type, width, height)
+                image_url = await save_image_to_canvas(
+                    session_id, canvas_id, filename, mime_type, width, height
+                )
                 print(f"✨ 图片已保存到画布: {filename}")
             except Exception as e:
                 print(f"❌ 保存图片到画布失败: {e}")
 
         return {
             'role': 'assistant',
-            'content': f'✨ Magic Success!!!\n\nResult url: {result_url}\n\n![image_id: {filename}](http://localhost:{DEFAULT_PORT}{image_url})'
+            'content': f'✨ Magic Success!!!\n\nResult url: {result_url}\n\n![image_id: {filename}](http://localhost:{DEFAULT_PORT}{image_url})',
         }
 
     except (asyncio.TimeoutError, Exception) as e:
@@ -133,24 +120,17 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
         if 'timeout' in error_msg or 'timed out' in error_msg:
             return {
                 'role': 'assistant',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': '✨ time out'
-                    }
-                ]
+                'content': [{'type': 'text', 'text': '✨ time out'}],
             }
         else:
             print(f"❌ 创建魔法回复时出错: {e}")
             return {
                 'role': 'assistant',
                 'content': [
-                    {
-                        'type': 'text',
-                        'text': f'✨ Magic Generation Error: {str(e)}'
-                    }
-                ]
+                    {'type': 'text', 'text': f'✨ Magic Generation Error: {str(e)}'}
+                ],
             }
+
 
 if __name__ == "__main__":
     asyncio.run(create_jaaz_response([]))

@@ -7,7 +7,9 @@ from typing import Dict, Any, List
 
 # Import service modules
 from services.db_service import db_service
-from services.OpenAIAgents_service import create_jaaz_response
+from services.OpenAIAgents_service import (
+    create_jaaz_response,
+)  # jaaz自行维护的云端magic生图能力
 from services.websocket_service import send_to_websocket  # type: ignore
 from services.stream_service import add_stream_task, remove_stream_task
 
@@ -45,7 +47,13 @@ async def handle_magic(data: Dict[str, Any]) -> None:
     if len(messages) == 1:
         # create new session
         prompt = messages[0].get('content', '')
-        await db_service.create_chat_session(session_id, 'gpt', 'jaaz', canvas_id, (prompt[:200] if isinstance(prompt, str) else ''))
+        await db_service.create_chat_session(
+            session_id,
+            'gpt',
+            'jaaz',
+            canvas_id,
+            (prompt[:200] if isinstance(prompt, str) else ''),
+        )
 
     # Save user message to database
     if len(messages) > 0:
@@ -54,20 +62,22 @@ async def handle_magic(data: Dict[str, Any]) -> None:
         )
 
     # Create and start magic generation task
-    task = asyncio.create_task(_process_magic_generation(messages, session_id, canvas_id))
+    task = asyncio.create_task(
+        _process_magic_generation(messages, session_id, canvas_id)
+    )  # 创建magic generation任务
 
     # Register the task in stream_tasks (for possible cancellation)
-    add_stream_task(session_id, task)
+    add_stream_task(session_id, task)  # 注册任务到stream_tasks，用于可能的取消
     try:
         # Await completion of the magic generation task
-        await task
+        await task  # 等待任务完成
     except asyncio.exceptions.CancelledError:
         print(f"🛑Magic generation session {session_id} cancelled")
     finally:
         # Always remove the task from stream_tasks after completion/cancellation
-        remove_stream_task(session_id)
+        remove_stream_task(session_id)  # 从stream_tasks中移除任务
         # Notify frontend WebSocket that magic generation is done
-        await send_to_websocket(session_id, {'type': 'done'})
+        await send_to_websocket(session_id, {'type': 'done'})  # 通知前端任务完成
 
     print('✨ magic_service 处理完成')
 

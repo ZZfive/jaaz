@@ -8,8 +8,7 @@ from services.config_service import config_service
 
 
 class JaazService:
-    """Jaaz 云端 API 服务
-    """
+    """Jaaz 云端 API 服务"""
 
     def __init__(self):
         """初始化 Jaaz 服务"""
@@ -36,10 +35,12 @@ class JaazService:
         """构建请求头"""
         return {
             "Authorization": f"Bearer {self.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
-    async def create_magic_task(self, image_content: str) -> str:
+    async def create_magic_task(
+        self, image_content: str
+    ) -> str:  # 下发魔法图像生成任务
         """
         创建云端魔法图像生成任务
 
@@ -58,31 +59,30 @@ class JaazService:
                 async with session.post(
                     f"{self.api_url}/image/magic",
                     headers=self._build_headers(),
-                    json={
-                        "image": image_content
-                    },
-                    timeout=aiohttp.ClientTimeout(total=60.0)
+                    json={"image": image_content},
+                    timeout=aiohttp.ClientTimeout(total=60.0),
                 ) as response:
                     if response.status == 200:
-                        data = await response.json()
-                        task_id = data.get('task_id', '')
+                        data = await response.json()  # 获取响应数据
+                        task_id = data.get('task_id', '')  # 获取任务ID
                         if task_id:
                             print(f"✅ Magic task created: {task_id}")
-                            return task_id
+                            return task_id  # 返回任务ID
                         else:
                             print("❌ No task_id in response")
                             return ""
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text()  # 获取错误信息
                         print(
-                            f"❌ Failed to create magic task: {response.status} - {error_text}")
+                            f"❌ Failed to create magic task: {response.status} - {error_text}"
+                        )
                         return ""
 
         except Exception as e:
             print(f"❌ Error creating magic task: {e}")
             return ""
 
-    async def create_video_task(
+    async def create_video_task(  # 下发视频生成任务
         self,
         prompt: str,
         model: str,
@@ -90,7 +90,7 @@ class JaazService:
         duration: Optional[int] = None,
         aspect_ratio: Optional[str] = None,
         input_images: Optional[List[str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         """
         创建云端视频生成任务
@@ -117,17 +117,17 @@ class JaazService:
                 "resolution": resolution,
                 "duration": duration,
                 "aspect_ratio": aspect_ratio,
-                **kwargs
+                **kwargs,
             }
 
             if input_images:
-                payload["input_images"] = input_images
+                payload["input_images"] = input_images  # 添加输入图片列表
 
             async with session.post(
                 f"{self.api_url}/video/sunra/generations",
                 headers=self._build_headers(),
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=120.0)
+                timeout=aiohttp.ClientTimeout(total=120.0),
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -139,13 +139,15 @@ class JaazService:
                         raise Exception("No task_id in response")
                 else:
                     error_text = await response.text()
-                    raise Exception(f"Failed to create video task: HTTP {response.status} - {error_text}")
+                    raise Exception(
+                        f"Failed to create video task: HTTP {response.status} - {error_text}"
+                    )
 
-    async def poll_for_task_completion(
+    async def poll_for_task_completion(  # 轮询任务完成
         self,
         task_id: str,
         max_attempts: Optional[int] = None,
-        interval: Optional[float] = None
+        interval: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         等待任务完成并返回结果
@@ -169,37 +171,42 @@ class JaazService:
                 async with session.get(
                     f"{self.api_url}/task/{task_id}",
                     headers=self._build_headers(),
-                    timeout=aiohttp.ClientTimeout(total=20.0)
+                    timeout=aiohttp.ClientTimeout(total=20.0),
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
                         if data.get('success') and data.get('data', {}).get('found'):
-                            task = data['data']['task']
-                            status = task.get('status')
+                            task = data['data']['task']  # 获取任务
+                            status = task.get('status')  # 获取任务状态
 
-                            if status == 'succeeded':
-                                print(
-                                    f"✅ Task {task_id} completed successfully")
-                                return task
+                            if status == 'succeeded':  # 任务成功
+                                print(f"✅ Task {task_id} completed successfully")
+                                return task  # 返回任务结果
                             elif status == 'failed':
-                                error_msg = task.get('error', 'Unknown error')
+                                error_msg = task.get(
+                                    'error', 'Unknown error'
+                                )  # 获取错误信息
                                 raise Exception(f"Task failed: {error_msg}")
                             elif status == 'cancelled':
-                                raise Exception("Task was cancelled")
+                                raise Exception("Task was cancelled")  # 任务取消
                             elif status == 'processing':
                                 # 继续轮询
-                                await asyncio.sleep(interval)
+                                await asyncio.sleep(interval)  # 等待一段时间后继续轮询
                                 continue
                             else:
                                 raise Exception(f"Unknown task status: {status}")
                         else:
                             raise Exception("Task not found")
                     else:
-                        raise Exception(f"Failed to get task status: HTTP {response.status}")
+                        raise Exception(
+                            f"Failed to get task status: HTTP {response.status}"
+                        )
 
             raise Exception(f"Task polling timeout after {max_attempts} attempts")
 
-    async def generate_magic_image(self, image_content: str) -> Optional[Dict[str, Any]]:
+    async def generate_magic_image(
+        self, image_content: str
+    ) -> Optional[Dict[str, Any]]:
         """
         生成魔法图像的完整流程
 
@@ -217,7 +224,9 @@ class JaazService:
                 return {"error": "Failed to create magic task"}
 
             # 2. 等待任务完成
-            result = await self.poll_for_task_completion(task_id, max_attempts=120, interval=5.0) # 10 分钟
+            result = await self.poll_for_task_completion(
+                task_id, max_attempts=120, interval=5.0
+            )  # 10 分钟
             if not result:
                 print("❌ Magic generation failed")
                 return {"error": "Magic generation failed"}
@@ -227,8 +236,7 @@ class JaazService:
                 print(f"❌ Magic generation failed: {error_msg}")
                 return {"error": f"Magic generation failed: {error_msg}"}
 
-            print(
-                f"✅ Magic image generated successfully: {result.get('result_url')}")
+            print(f"✅ Magic image generated successfully: {result.get('result_url')}")
             return result
 
         except Exception as e:
@@ -244,7 +252,7 @@ class JaazService:
         duration: Optional[int] = None,
         aspect_ratio: Optional[str] = None,
         input_images: Optional[List[str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         生成视频的完整流程
@@ -272,7 +280,7 @@ class JaazService:
             duration=duration,
             aspect_ratio=aspect_ratio,
             input_images=input_images,
-            **kwargs
+            **kwargs,
         )
 
         if not task_id:
@@ -289,8 +297,7 @@ class JaazService:
         if not result.get('result_url'):
             raise Exception("No result URL found in video generation response")
 
-        print(
-            f"✅ Video generated successfully: {result.get('result_url')}")
+        print(f"✅ Video generated successfully: {result.get('result_url')}")
         return result
 
     async def generate_video_by_seedance(
@@ -301,7 +308,7 @@ class JaazService:
         duration: int = 5,
         aspect_ratio: str = "16:9",
         input_images: Optional[List[str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         使用 Seedance 模型生成视频的完整流程
@@ -329,7 +336,7 @@ class JaazService:
                 "resolution": resolution,
                 "duration": duration,
                 "aspect_ratio": aspect_ratio,
-                **kwargs
+                **kwargs,
             }
 
             if input_images:
@@ -339,7 +346,7 @@ class JaazService:
                 f"{self.api_url}/video/seedance/generation",
                 headers=self._build_headers(),
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=120.0)
+                timeout=aiohttp.ClientTimeout(total=120.0),
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -348,7 +355,9 @@ class JaazService:
                         raise Exception("No task_id in response")
                 else:
                     error_text = await response.text()
-                    raise Exception(f"Failed to create Seedance video task: HTTP {response.status} - {error_text}")
+                    raise Exception(
+                        f"Failed to create Seedance video task: HTTP {response.status} - {error_text}"
+                    )
 
         print(f"✅ Seedance video task created: {task_id}")
 
@@ -363,15 +372,11 @@ class JaazService:
         if not result.get('result_url'):
             raise Exception("No result URL found in Seedance video generation response")
 
-        print(
-            f"✅ Seedance video generated successfully: {result.get('result_url')}")
+        print(f"✅ Seedance video generated successfully: {result.get('result_url')}")
         return result
 
     async def create_midjourney_task(
-        self,
-        prompt: str,
-        model: str = "midjourney",
-        **kwargs: Any
+        self, prompt: str, model: str = "midjourney", **kwargs: Any
     ) -> str:
         """
         创建云端 Midjourney 图像生成任务
@@ -388,17 +393,13 @@ class JaazService:
             Exception: 当任务创建失败时抛出异常
         """
         async with HttpClient.create_aiohttp() as session:
-            payload = {
-                "prompt": prompt,
-                "model": model,
-                **kwargs
-            }
+            payload = {"prompt": prompt, "model": model, **kwargs}
 
             async with session.post(
                 f"{self.api_url}/image/midjourney/generation",
                 headers=self._build_headers(),
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=60.0)
+                timeout=aiohttp.ClientTimeout(total=60.0),
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -410,13 +411,12 @@ class JaazService:
                         raise Exception("No task_id in response")
                 else:
                     error_text = await response.text()
-                    raise Exception(f"Failed to create Midjourney task: HTTP {response.status} - {error_text}")
+                    raise Exception(
+                        f"Failed to create Midjourney task: HTTP {response.status} - {error_text}"
+                    )
 
     async def generate_image_by_midjourney(
-        self,
-        prompt: str,
-        model: str = "midjourney",
-        **kwargs: Any
+        self, prompt: str, model: str = "midjourney", **kwargs: Any
     ) -> Dict[str, Any]:
         """
         使用 Midjourney 生成图像的完整流程
@@ -434,22 +434,24 @@ class JaazService:
         """
         # 1. 创建 Midjourney 图像生成任务
         task_id = await self.create_midjourney_task(
-            prompt=prompt,
-            model=model,
-            **kwargs
+            prompt=prompt, model=model, **kwargs
         )
 
         if not task_id:
             raise Exception("Failed to create Midjourney task")
 
         # 2. 等待任务完成
-        task_result = await self.poll_for_task_completion(task_id, max_attempts=150, interval=2.0)
+        task_result = await self.poll_for_task_completion(
+            task_id, max_attempts=150, interval=2.0
+        )
         print(f"🎨 Midjourney task result: {task_result}")
         if not task_result:
             raise Exception("Midjourney image generation failed")
 
         if task_result.get('error'):
-            raise Exception(f"Midjourney image generation failed: {task_result['error']}")
+            raise Exception(
+                f"Midjourney image generation failed: {task_result['error']}"
+            )
 
         if not task_result.get('result'):
             raise Exception("No result found in Midjourney image generation response")
