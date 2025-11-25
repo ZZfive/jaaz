@@ -17,7 +17,7 @@ from routers import (
     canvas,  # 画布路由
     ssl_test,
     chat_router,  # 聊天路由
-    settings,
+    settings,  # 设置路由
     tool_confirmation,  # 工具确认路由
 )
 from fastapi.responses import FileResponse
@@ -39,7 +39,7 @@ print('Importing config_service')
 from services.config_service import config_service
 
 print('Importing tool_service')
-from services.tool_service import tool_service
+from services.tool_service import tool_service  # 工具服务
 
 
 async def initialize():
