@@ -53,17 +53,17 @@ root_dir = os.path.dirname(__file__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # 生命周期管理器
     # onstartup
     # TODO: Check if there will be racing conditions when user send chat request but tools and models are not initialized yet.
-    await initialize()
-    await tool_service.initialize()
+    await initialize()  # 初始化配置服务
+    await tool_service.initialize()  # 初始化工具服务
     yield
     # onshutdown
 
 
 print('Creating FastAPI app')
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan)  # 创建FastAPI应用
 
 # Include routers
 print('Including routers')
@@ -80,7 +80,7 @@ app.include_router(tool_confirmation.router)
 # Mount the React build directory
 react_build_dir = os.environ.get(
     'UI_DIST_DIR', os.path.join(os.path.dirname(root_dir), "react", "dist")
-)
+)  # 获取React构建目录
 
 
 # 无缓存静态文件类
@@ -89,21 +89,25 @@ class NoCacheStaticFiles(StaticFiles):
         response = await super().get_response(path, scope)
         if response.status_code == 200:
             response.headers["Cache-Control"] = (
-                "no-store, no-cache, must-revalidate, max-age=0"
+                "no-store, no-cache, must-revalidate, max-age=0"  # 不存储、不缓存
             )
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
+            response.headers["Pragma"] = "no-cache"  # HTTP/1.0 兼容
+            response.headers["Expires"] = "0"  # 立即过期
         return response
 
 
 static_site = os.path.join(react_build_dir, "assets")
-if os.path.exists(static_site):
-    app.mount("/assets", NoCacheStaticFiles(directory=static_site), name="assets")
+if os.path.exists(static_site):  # 开发环境中实时更新前端资源，避免缓存导致的更新延迟
+    app.mount(
+        "/assets", NoCacheStaticFiles(directory=static_site), name="assets"
+    )  # 挂载静态文件
 
 
 @app.get("/")
 async def serve_react_app():
-    response = FileResponse(os.path.join(react_build_dir, "index.html"))
+    response = FileResponse(
+        os.path.join(react_build_dir, "index.html")
+    )  # 根路径/返回index.html文件
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
@@ -111,7 +115,12 @@ async def serve_react_app():
 
 
 print('Creating socketio app')
-socket_app = socketio.ASGIApp(sio, other_asgi_app=app, socketio_path='/socket.io')
+socket_app = socketio.ASGIApp(
+    sio,
+    other_asgi_app=app,
+    socketio_path='/socket.io',  # 请求路径为/socket.io时由SocketIO处理，其他路径由FastAPI处理
+)  # 创建SocketIO应用，可通过一个进程和端口同时部署websocket和fastapi两个服务，并且两者可以进行通讯
+
 
 if __name__ == "__main__":
     # bypass localhost request for proxy, fix ollama proxy issue
@@ -121,12 +130,12 @@ if __name__ == "__main__":
     )
     os.environ["no_proxy"] = os.environ["NO_PROXY"] = ",".join(
         sorted(_bypass | current - {""})
-    )
+    )  # 设置no_proxy环境变量，用于绕过本地代理，即请求本地不走代理
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--port', type=int, default=57988, help='Port to run the server on'
-    )
+    )  # 设置端口
     args = parser.parse_args()
     import uvicorn
 
