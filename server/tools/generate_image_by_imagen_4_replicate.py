@@ -5,9 +5,11 @@ from tools.utils.image_generation_core import generate_image_with_provider
 from tools.generate_image_by_imagen_4_jaaz import GenerateImageByImagen4InputSchema
 
 
-@tool("generate_image_by_imagen_4_replicate",
-      description="Generate an image by Google Imagen-4 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Google's advanced AI through Replicate platform.",
-      args_schema=GenerateImageByImagen4InputSchema)
+@tool(
+    "generate_image_by_imagen_4_replicate",
+    description="Generate an image by Google Imagen-4 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Google's advanced AI through Replicate platform.",
+    args_schema=GenerateImageByImagen4InputSchema,
+)
 async def generate_image_by_imagen_4_replicate(
     prompt: str,
     aspect_ratio: str,

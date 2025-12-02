@@ -12,16 +12,18 @@ class GenerateImageByFluxKontextProInputSchema(BaseModel):
     aspect_ratio: str = Field(
         description="Required. Aspect ratio of the image, only these values are allowed: 1:1, 16:9, 4:3, 3:4, 9:16. Choose the best fitting aspect ratio according to the prompt. Best ratio for posters is 3:4"
     )
-    input_images: list[str]| None = Field(
+    input_images: list[str] | None = Field(
         default=None,
-        description="Optional; Image to use as reference. Only one image is allowed, e.g. ['im_jurheut7.png']. Best for image editing cases like: Editing specific parts of the image, Removing specific objects, Maintaining visual elements across scenes (character/object consistency), Generating new content in the style of the reference (style transfer), etc."
+        description="Optional; Image to use as reference. Only one image is allowed, e.g. ['im_jurheut7.png']. Best for image editing cases like: Editing specific parts of the image, Removing specific objects, Maintaining visual elements across scenes (character/object consistency), Generating new content in the style of the reference (style transfer), etc.",
     )
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_flux_kontext_pro_jaaz",
-      description="Generate an image by Flux Kontext Pro model using text prompt or optionally pass an image for reference or editing. Good for object removal, image editing, etc. Only one input image is allowed.",
-      args_schema=GenerateImageByFluxKontextProInputSchema)
+@tool(
+    "generate_image_by_flux_kontext_pro_jaaz",
+    description="Generate an image by Flux Kontext Pro model using text prompt or optionally pass an image for reference or editing. Good for object removal, image editing, etc. Only one input image is allowed.",
+    args_schema=GenerateImageByFluxKontextProInputSchema,
+)
 async def generate_image_by_flux_kontext_pro_jaaz(
     prompt: str,
     aspect_ratio: str,
@@ -41,6 +43,7 @@ async def generate_image_by_flux_kontext_pro_jaaz(
         aspect_ratio=aspect_ratio,
         input_images=input_images,
     )
+
 
 # Export the tool for easy import
 __all__ = ["generate_image_by_flux_kontext_pro_jaaz"]

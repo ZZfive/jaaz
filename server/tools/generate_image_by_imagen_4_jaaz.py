@@ -4,6 +4,7 @@ from langchain_core.tools import tool, InjectedToolCallId  # type: ignore
 from langchain_core.runnables import RunnableConfig
 from tools.utils.image_generation_core import generate_image_with_provider
 
+
 class GenerateImageByImagen4InputSchema(BaseModel):
     prompt: str = Field(
         description="Required. The prompt for image generation. If you want to edit an image, please describe what you want to edit in the prompt."
@@ -14,10 +15,11 @@ class GenerateImageByImagen4InputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-
-@tool("generate_image_by_imagen_4_jaaz",
-      description="Generate an image by Google Imagen-4 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Google's advanced AI. Supports multiple providers with automatic fallback.",
-      args_schema=GenerateImageByImagen4InputSchema)
+@tool(
+    "generate_image_by_imagen_4_jaaz",
+    description="Generate an image by Google Imagen-4 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Google's advanced AI. Supports multiple providers with automatic fallback.",
+    args_schema=GenerateImageByImagen4InputSchema,
+)
 async def generate_image_by_imagen_4_jaaz(
     prompt: str,
     aspect_ratio: str,

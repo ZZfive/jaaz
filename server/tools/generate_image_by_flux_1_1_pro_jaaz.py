@@ -15,9 +15,11 @@ class GenerateImageByFlux11ProInputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_flux_1_1_pro",
-      description="Generate an image by Flux 1.1 Pro model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Flux's advanced AI. Supports multiple providers with automatic fallback.",
-      args_schema=GenerateImageByFlux11ProInputSchema)
+@tool(
+    "generate_image_by_flux_1_1_pro",
+    description="Generate an image by Flux 1.1 Pro model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Flux's advanced AI. Supports multiple providers with automatic fallback.",
+    args_schema=GenerateImageByFlux11ProInputSchema,
+)
 async def generate_image_by_flux_1_1_pro(
     prompt: str,
     aspect_ratio: str,

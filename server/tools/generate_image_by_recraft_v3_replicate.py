@@ -5,9 +5,11 @@ from tools.utils.image_generation_core import generate_image_with_provider
 from tools.generate_image_by_recraft_v3_jaaz import GenerateImageByRecraftV3InputSchema
 
 
-@tool("generate_image_by_recraft_v3_replicate",
-      description="Generate an image by Recraft V3 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Recraft's advanced AI. Supports multiple providers with automatic fallback.",
-      args_schema=GenerateImageByRecraftV3InputSchema)
+@tool(
+    "generate_image_by_recraft_v3_replicate",
+    description="Generate an image by Recraft V3 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Recraft's advanced AI. Supports multiple providers with automatic fallback.",
+    args_schema=GenerateImageByRecraftV3InputSchema,
+)
 async def generate_image_by_recraft_v3_replicate(
     prompt: str,
     aspect_ratio: str,

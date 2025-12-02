@@ -4,6 +4,7 @@ from langchain_core.tools import tool, InjectedToolCallId  # type: ignore
 from langchain_core.runnables import RunnableConfig
 from tools.utils.image_generation_core import generate_image_with_provider
 
+
 class GenerateImageByRecraftV3InputSchema(BaseModel):
     prompt: str = Field(
         description="Required. The prompt for image generation. If you want to edit an image, please describe what you want to edit in the prompt."
@@ -14,9 +15,11 @@ class GenerateImageByRecraftV3InputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_recraft_v3_jaaz",
-      description="Generate an image by Recraft V3 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Recraft's advanced AI. Supports multiple providers with automatic fallback.",
-      args_schema=GenerateImageByRecraftV3InputSchema)
+@tool(
+    "generate_image_by_recraft_v3_jaaz",
+    description="Generate an image by Recraft V3 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Recraft's advanced AI. Supports multiple providers with automatic fallback.",
+    args_schema=GenerateImageByRecraftV3InputSchema,
+)
 async def generate_image_by_recraft_v3_jaaz(
     prompt: str,
     aspect_ratio: str,
@@ -29,7 +32,7 @@ async def generate_image_by_recraft_v3_jaaz(
     ctx = config.get('configurable', {})
     canvas_id = ctx.get('canvas_id', '')
     session_id = ctx.get('session_id', '')
-    return await generate_image_with_provider(        
+    return await generate_image_with_provider(
         canvas_id=canvas_id,
         session_id=session_id,
         provider='jaaz',

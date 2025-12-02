@@ -3,10 +3,18 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import tool, InjectedToolCallId  # type: ignore
 from langchain_core.runnables import RunnableConfig
 from services.jaaz_service import JaazService
-from tools.utils.image_canvas_utils import save_image_to_canvas, send_image_start_notification, send_image_error_notification
+from tools.utils.image_canvas_utils import (
+    save_image_to_canvas,
+    send_image_start_notification,
+    send_image_error_notification,
+)
 from common import DEFAULT_PORT
 import os
-from tools.utils.image_utils import get_image_info_and_save, generate_image_id, process_input_image
+from tools.utils.image_utils import (
+    get_image_info_and_save,
+    generate_image_id,
+    process_input_image,
+)
 from services.config_service import FILES_DIR
 
 
@@ -16,14 +24,16 @@ class GenerateImageByMidjourneyInputSchema(BaseModel):
     )
     input_images: List[str] | None = Field(
         default=None,
-        description="Optional. A list of image URLs to use as input for the image generation. If provided, the images will be used as input for the image generation."
+        description="Optional. A list of image URLs to use as input for the image generation. If provided, the images will be used as input for the image generation.",
     )
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_midjourney_jaaz",
-      description="Generate high-quality images using Midjourney model. Returns multiple images and saves them to canvas. Use this for artistic and creative image generation.",
-      args_schema=GenerateImageByMidjourneyInputSchema)
+@tool(
+    "generate_image_by_midjourney_jaaz",
+    description="Generate high-quality images using Midjourney model. Returns multiple images and saves them to canvas. Use this for artistic and creative image generation.",
+    args_schema=GenerateImageByMidjourneyInputSchema,
+)
 async def generate_image_by_midjourney_jaaz(
     prompt: str,
     config: RunnableConfig,
@@ -45,8 +55,7 @@ async def generate_image_by_midjourney_jaaz(
     try:
         # Send start notification
         await send_image_start_notification(
-            session_id,
-            f"Starting Midjourney image generation..."
+            session_id, f"Starting Midjourney image generation..."
         )
 
         # Process input images if provided (only use the first one)
@@ -60,7 +69,8 @@ async def generate_image_by_midjourney_jaaz(
                 print(f"Using input image for video generation: {first_image}")
             else:
                 raise ValueError(
-                    f"Failed to process input image: {first_image}. Please check if the image exists and is valid.")
+                    f"Failed to process input image: {first_image}. Please check if the image exists and is valid."
+                )
 
         # Create Jaaz service and generate image
         jaaz_service = JaazService()
@@ -102,7 +112,7 @@ async def generate_image_by_midjourney_jaaz(
                         "original_url": image_url,
                         "file_size": image_data.get('file_size'),
                         "content_type": image_data.get('content_type'),
-                    }
+                    },
                 )
 
                 filename = f'{image_id}.{extension}'
@@ -113,12 +123,14 @@ async def generate_image_by_midjourney_jaaz(
                 )
 
                 # Add to saved images list
-                saved_images.append({
-                    "image_id": filename,
-                    "url": canvas_image_url,
-                    "index": i,
-                    "original_data": image_data
-                })
+                saved_images.append(
+                    {
+                        "image_id": filename,
+                        "url": canvas_image_url,
+                        "index": i,
+                        "original_data": image_data,
+                    }
+                )
 
                 print(f"🎨 Saved image {i+1}/{len(images)}: {filename}")
 
@@ -137,7 +149,10 @@ async def generate_image_by_midjourney_jaaz(
                 f"![image_{saved_image['index']+1}: {saved_image['image_id']}](http://localhost:{DEFAULT_PORT}{saved_image['url']})"
             )
 
-        result_message = f"Midjourney generated {len(saved_images)} images successfully:\n\n" + "\n\n".join(image_links)
+        result_message = (
+            f"Midjourney generated {len(saved_images)} images successfully:\n\n"
+            + "\n\n".join(image_links)
+        )
 
         print(f"🎨 Midjourney generation completed: {len(saved_images)} images saved")
         return result_message

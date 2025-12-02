@@ -14,14 +14,16 @@ class GenerateImageByGptImage1InputSchema(BaseModel):
     )
     input_images: list[str] | None = Field(
         default=None,
-        description="Optional; One or multiple images to use as reference. Pass a list of image_id here, e.g. ['im_jurheut7.png', 'im_hfuiut78.png']. Best for image editing cases like: Editing specific parts of the image, Removing specific objects, Maintaining visual elements across scenes (character/object consistency), Generating new content in the style of the reference (style transfer), etc."
+        description="Optional; One or multiple images to use as reference. Pass a list of image_id here, e.g. ['im_jurheut7.png', 'im_hfuiut78.png']. Best for image editing cases like: Editing specific parts of the image, Removing specific objects, Maintaining visual elements across scenes (character/object consistency), Generating new content in the style of the reference (style transfer), etc.",
     )
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_gpt_image_1_jaaz",
-      description="Generate an image by gpt image model using text prompt or optionally pass images for reference or for editing. Use this model if you need to use multiple input images as reference. Supports multiple providers with automatic fallback.",
-      args_schema=GenerateImageByGptImage1InputSchema)
+@tool(
+    "generate_image_by_gpt_image_1_jaaz",
+    description="Generate an image by gpt image model using text prompt or optionally pass images for reference or for editing. Use this model if you need to use multiple input images as reference. Supports multiple providers with automatic fallback.",
+    args_schema=GenerateImageByGptImage1InputSchema,
+)
 async def generate_image_by_gpt_image_1_jaaz(
     prompt: str,
     aspect_ratio: str,

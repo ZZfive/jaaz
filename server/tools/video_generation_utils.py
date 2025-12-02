@@ -9,6 +9,7 @@ from PIL import Image
 
 from nanoid import generate
 from mimetypes import guess_type
+
 # import httpx
 import mimetypes
 from pymediainfo import MediaInfo
@@ -82,16 +83,12 @@ def get_image_base64(image_name: str):
         elif ratio > 1:
             new_width = int(height * 2.4)
             new_height = height
-            image = image.resize(
-                (new_width, new_height), Image.Resampling.LANCZOS
-            )
+            image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
     else:
         new_width, new_height = image.size
 
     # 计算缩放因子，确保类型为float
-    scale_factor: float = float(
-        (float(1048576) / float(new_width * new_height)) ** 0.5
-    )
+    scale_factor: float = float((float(1048576) / float(new_width * new_height)) ** 0.5)
 
     preview_image_width = int(new_width * scale_factor)
     preview_image_height = int(new_height * scale_factor)

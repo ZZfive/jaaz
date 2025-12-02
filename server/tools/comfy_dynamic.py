@@ -64,20 +64,22 @@ def _build_input_schema(wf: Dict[str, Any]) -> type[BaseModel]:
     try:
         input_defs: List[Dict[str, Any]] = (
             wf["inputs"] if isinstance(wf["inputs"], list) else json.loads(wf["inputs"])
-        )
+        )  # 将workflow['inputs']转换为List[Dict[str, Any]]类型
     except Exception:
         # fall back to empty model if bad schema
-        input_defs = []
+        input_defs = []  # 如果workflow['inputs']格式不正确，则返回空列表
 
     fields: Dict[str, tuple] = {}
     for param in input_defs:
-        name = param.get("name")
+        name = param.get("name")  # 获取参数名称
         if not name:
             continue
-        py_t = _python_type(param.get("type"), param.get("default_value"))
-        default_val = param.get("default_value")
-        desc = param.get("description", "")
-        is_required = param.get("required", False)
+        py_t = _python_type(
+            param.get("type"), param.get("default_value")
+        )  # 获取参数类型
+        default_val = param.get("default_value")  # 获取参数默认值
+        desc = param.get("description", "")  # 获取参数描述
+        is_required = param.get("required", False)  # 获取参数是否必填
 
         if is_required:
             desc = f"Required. {desc}"
@@ -89,25 +91,29 @@ def _build_input_schema(wf: Dict[str, Any]) -> type[BaseModel]:
                 Field(default=default_val, description=desc),
             )
     # add a tool_call_id - fix the field definition format
-    fields["tool_call_id"] = (
+    fields["tool_call_id"] = (  # 添加tool_call_id字段
         Annotated[str, InjectedToolCallId],
         Field(description="Tool call identifier"),
     )
 
-    model_name = f"{wf['name'].title().replace(' ', '')}InputSchema"
-    return create_model(model_name, __base__=BaseModel, **fields)
+    model_name = f"{wf['name'].title().replace(' ', '')}InputSchema"  # 创建模型名称
+    return create_model(
+        model_name, __base__=BaseModel, **fields
+    )  # 动态创建pydantic模型
 
 
 def build_tool(wf: Dict[str, Any]) -> BaseTool:
     """Return an @tool function for the given workflow record."""
-    input_schema = _build_input_schema(wf)
+    input_schema = _build_input_schema(wf)  # 构建输入模式
 
+    # 定义符合LangChain工具规范的工具函数
     @tool(
-        wf["name"],
-        description=wf.get("description") or f"Run ComfyUI workflow {wf['id']}",
+        wf["name"],  # 工作流名称
+        description=wf.get("description")
+        or f"Run ComfyUI workflow {wf['id']}",  # 工作流描述
         args_schema=input_schema,
     )
-    async def _run(
+    async def _run(  # 工具函数实现
         config: RunnableConfig,
         tool_call_id: Annotated[str, InjectedToolCallId],
         **kwargs,
@@ -124,13 +130,15 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
         ctx["tool_call_id"] = tool_call_id
         api_url = str(
             config_service.app_config.get("comfyui", {}).get("url", "")
-        ).rstrip("/")
+        ).rstrip(
+            "/"
+        )  # 获取ComfyUI服务地址
 
         # if there's image, upload it!
         # First, let's filter all values endswith .jpg .png etc
 
-        required_data = dict(kwargs)
-        for key, value in required_data.items():
+        required_data = dict(kwargs)  # 将kwargs转换为字典
+        for key, value in required_data.items():  # 遍历字典
             if isinstance(value, str) and value.lower().endswith(IMAGE_FORMATS):
                 # Image!
                 # Extract filename from potential API path like "/api/file/filename.png"
@@ -146,10 +154,12 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
                 with open(image_path, "rb") as image_file:
                     image_bytes = image_file.read()
                 image_stream = BytesIO(image_bytes)
-                image_name = await upload_image(image_stream, api_url, filename)
-                required_data[key] = image_name
+                image_name = await upload_image(
+                    image_stream, api_url, filename
+                )  # 将图片上传到ComfyUI服务的input路径下
+                required_data[key] = image_name  # 将图片名称存储到required_data字典中
 
-        workflow_dict = await db_service.get_comfy_workflow(wf["id"])
+        workflow_dict = await db_service.get_comfy_workflow(wf["id"])  # 获取工作流字典
 
         try:
             input_defs: List[Dict[str, Any]] = (
@@ -190,11 +200,13 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
                 )
 
         try:
-            generator = ComfyUIWorkflowRunner(workflow_dict, api_url)
-            extra_kwargs = {}
-            extra_kwargs["ctx"] = ctx
+            generator = ComfyUIWorkflowRunner(
+                workflow_dict, api_url
+            )  # 创建工作流运行器
+            extra_kwargs = {}  # 创建额外参数字典
+            extra_kwargs["ctx"] = ctx  # 将ctx存储到额外参数字典中
 
-            outputs = await generator.generate(**extra_kwargs)
+            outputs = await generator.generate(**extra_kwargs)  # 运行工作流
             # if outputs is not a list of list, make it a list of list
             if not isinstance(outputs, list) or (
                 outputs and not isinstance(outputs[0], (list, tuple))
@@ -210,13 +222,13 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
             if "files" not in canvas_data["data"]:
                 canvas_data["data"]["files"] = {}
 
-            generated_files_info = []
+            generated_files_info = []  # 创建生成文件信息列表
 
             for output in outputs:
                 mime_type, width, height, filename = output
-                file_id = generate_file_id()
+                file_id = generate_file_id()  # 生成文件ID
 
-                url = f"/api/file/{filename}"
+                url = f"/api/file/{filename}"  # 生成文件URL
 
                 file_data = {
                     "mimeType": mime_type,
@@ -247,12 +259,16 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
                         canvas_data=canvas_data.get("data", {}),
                     )
 
-                canvas_data["data"]["elements"].append(new_element)
-                canvas_data["data"]["files"][file_id] = file_data
+                canvas_data["data"]["elements"].append(
+                    new_element
+                )  # 将新元素添加到画布数据中
+                canvas_data["data"]["files"][
+                    file_id
+                ] = file_data  # 将文件数据存储到画布数据中
 
-                image_url = f"http://localhost:{DEFAULT_PORT}/api/file/{filename}"
+                image_url = f"http://localhost:{DEFAULT_PORT}/api/file/{filename}"  # 生成图片URL
 
-                generated_files_info.append(
+                generated_files_info.append(  # 将生成文件信息添加到生成文件信息列表中
                     {
                         "element": new_element,
                         "file": file_data,
@@ -263,10 +279,10 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
                 )
 
             await db_service.save_canvas_data(
-                canvas_id, json.dumps(canvas_data["data"])
+                canvas_id, json.dumps(canvas_data["data"])  # 保存画布数据
             )
 
-            for file_info in generated_files_info:
+            for file_info in generated_files_info:  # 遍历生成文件信息列表
                 if file_info["mime_type"].startswith("image"):
                     await broadcast_session_update(
                         session_id,
@@ -305,4 +321,4 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
             await send_to_websocket(session_id, {"type": "error", "error": str(e)})
             return f"image generation failed: {str(e)}"
 
-    return _run
+    return _run  # 返回工具函数

@@ -15,9 +15,11 @@ class GenerateImageByDoubaoSeedream3InputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_doubao_seedream_3_jaaz",
-      description="Generate an image by Doubao Seedream 3 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Doubao's advanced AI. Supports multiple providers with automatic fallback.",
-      args_schema=GenerateImageByDoubaoSeedream3InputSchema)
+@tool(
+    "generate_image_by_doubao_seedream_3_jaaz",
+    description="Generate an image by Doubao Seedream 3 model using text prompt. This model does NOT support input images for reference or editing. Use this model for high-quality image generation with Doubao's advanced AI. Supports multiple providers with automatic fallback.",
+    args_schema=GenerateImageByDoubaoSeedream3InputSchema,
+)
 async def generate_image_by_doubao_seedream_3_jaaz(
     prompt: str,
     aspect_ratio: str,

@@ -7,12 +7,14 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolCallId
 from typing import List
 
+
 class Step(BaseModel):
     title: str
     description: Optional[str] = Field(
         default="",
         description="Description of the step",
     )
+
 
 class StepsInput(BaseModel):
     steps: List[Step] = Field(
@@ -22,12 +24,14 @@ class StepsInput(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("write_plan", 
-description="""
+@tool(
+    "write_plan",
+    description="""
 Write a plan to complete the current task in the order of execution, including the steps and the description of each step. 
 The plan should be friendly to showcase to the user.
 """,
-args_schema=StepsInput)
+    args_schema=StepsInput,
+)
 def write_plan_tool(
     steps: List[Step],
     config: RunnableConfig,

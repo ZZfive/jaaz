@@ -15,9 +15,11 @@ class GenerateImageByIdeogram3InputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_image_by_ideogram3_bal_jaaz",
-      description="Generate an image by Ideogram 3 balanced model using text prompt. A good backup model for image generation if other models are not available. This model does NOT support input images for reference or editing.",
-      args_schema=GenerateImageByIdeogram3InputSchema)
+@tool(
+    "generate_image_by_ideogram3_bal_jaaz",
+    description="Generate an image by Ideogram 3 balanced model using text prompt. A good backup model for image generation if other models are not available. This model does NOT support input images for reference or editing.",
+    args_schema=GenerateImageByIdeogram3InputSchema,
+)
 async def generate_image_by_ideogram3_bal_jaaz(
     prompt: str,
     aspect_ratio: str,

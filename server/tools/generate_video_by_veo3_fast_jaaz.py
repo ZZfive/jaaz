@@ -3,10 +3,14 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import tool, InjectedToolCallId  # type: ignore
 from langchain_core.runnables import RunnableConfig
 from services.jaaz_service import JaazService
-from tools.video_generation.video_canvas_utils import send_video_start_notification, process_video_result
+from tools.video_generation.video_canvas_utils import (
+    send_video_start_notification,
+    process_video_result,
+)
 from services.tool_confirmation_manager import tool_confirmation_manager
 from services.websocket_service import send_to_websocket
 import json
+
 
 class GenerateVideoByVeo3FastInputSchema(BaseModel):
     prompt: str = Field(
@@ -15,9 +19,11 @@ class GenerateVideoByVeo3FastInputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_video_by_veo3_fast_jaaz",
-      description="Generate high-quality videos using Veo3 Fast model. Fast text-to-video generation with optimized performance.",
-      args_schema=GenerateVideoByVeo3FastInputSchema)
+@tool(
+    "generate_video_by_veo3_fast_jaaz",
+    description="Generate high-quality videos using Veo3 Fast model. Fast text-to-video generation with optimized performance.",
+    args_schema=GenerateVideoByVeo3FastInputSchema,
+)
 async def generate_video_by_veo3_fast_jaaz(
     prompt: str,
     config: RunnableConfig,
@@ -32,18 +38,21 @@ async def generate_video_by_veo3_fast_jaaz(
     session_id = ctx.get('session_id', '')
     print(f'🛠️ canvas_id {canvas_id} session_id {session_id}')
 
-        # 检查是否需要确认
+    # 检查是否需要确认
     arguments = {
         'prompt': prompt,
     }
 
     # 发送确认请求
-    await send_to_websocket(session_id, {
-        'type': 'tool_call_pending_confirmation',
-        'id': tool_call_id,
-        'name': 'generate_video_by_veo3_fast_jaaz',
-        'arguments': json.dumps(arguments)
-    })
+    await send_to_websocket(
+        session_id,
+        {
+            'type': 'tool_call_pending_confirmation',
+            'id': tool_call_id,
+            'name': 'generate_video_by_veo3_fast_jaaz',
+            'arguments': json.dumps(arguments),
+        },
+    )
 
     # 等待确认
     confirmed = await tool_confirmation_manager.request_confirmation(
@@ -59,8 +68,7 @@ async def generate_video_by_veo3_fast_jaaz(
     try:
         # Send start notification
         await send_video_start_notification(
-            session_id,
-            f"Starting Veo3 Fast video generation..."
+            session_id, f"Starting Veo3 Fast video generation..."
         )
 
         # Create Jaaz service and generate video

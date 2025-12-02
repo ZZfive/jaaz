@@ -3,7 +3,10 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import tool, InjectedToolCallId  # type: ignore
 from langchain_core.runnables import RunnableConfig
 from services.jaaz_service import JaazService
-from tools.video_generation.video_canvas_utils import send_video_start_notification, process_video_result
+from tools.video_generation.video_canvas_utils import (
+    send_video_start_notification,
+    process_video_result,
+)
 from .utils.image_utils import process_input_image
 
 
@@ -13,30 +16,32 @@ class GenerateVideoBySeedanceV1InputSchema(BaseModel):
     )
     resolution: str = Field(
         default="480p",
-        description="Optional. The resolution of the video. Use 480p if not explicitly specified by user. Allowed values: 480p, 1080p."
+        description="Optional. The resolution of the video. Use 480p if not explicitly specified by user. Allowed values: 480p, 1080p.",
     )
     duration: int = Field(
         default=5,
-        description="Optional. The duration of the video in seconds. Use 5 by default. Allowed values: 5, 10."
+        description="Optional. The duration of the video in seconds. Use 5 by default. Allowed values: 5, 10.",
     )
     aspect_ratio: str = Field(
         default="16:9",
-        description="Optional. The aspect ratio of the video. Allowed values: 1:1, 16:9, 4:3, 21:9"
+        description="Optional. The aspect ratio of the video. Allowed values: 1:1, 16:9, 4:3, 21:9",
     )
     input_images: list[str] | None = Field(
         default=None,
-        description="Optional. Images to use as reference or first frame. Pass a list of image_id here, e.g. ['im_jurheut7.png']."
+        description="Optional. Images to use as reference or first frame. Pass a list of image_id here, e.g. ['im_jurheut7.png'].",
     )
     camera_fixed: bool = Field(
         default=True,
-        description="Optional. Whether to keep the camera fixed (no camera movement)."
+        description="Optional. Whether to keep the camera fixed (no camera movement).",
     )
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_video_by_seedance_v1_jaaz",
-      description="Generate high-quality videos using Seedance V1 model. Supports multiple providers and text-to-video/image-to-video generation.",
-      args_schema=GenerateVideoBySeedanceV1InputSchema)
+@tool(
+    "generate_video_by_seedance_v1_jaaz",
+    description="Generate high-quality videos using Seedance V1 model. Supports multiple providers and text-to-video/image-to-video generation.",
+    args_schema=GenerateVideoBySeedanceV1InputSchema,
+)
 async def generate_video_by_seedance_v1_jaaz(
     prompt: str,
     config: RunnableConfig,
@@ -62,8 +67,7 @@ async def generate_video_by_seedance_v1_jaaz(
     try:
         # Send start notification
         await send_video_start_notification(
-            session_id,
-            f"Starting Seedance video generation..."
+            session_id, f"Starting Seedance video generation..."
         )
 
         # Process input images if provided (only use the first one)
@@ -77,7 +81,8 @@ async def generate_video_by_seedance_v1_jaaz(
                 print(f"Using input image for video generation: {first_image}")
             else:
                 raise ValueError(
-                    f"Failed to process input image: {first_image}. Please check if the image exists and is valid.")
+                    f"Failed to process input image: {first_image}. Please check if the image exists and is valid."
+                )
 
         # Create Jaaz service and generate video
         jaaz_service = JaazService()

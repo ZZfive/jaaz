@@ -3,7 +3,10 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import tool, InjectedToolCallId  # type: ignore
 from langchain_core.runnables import RunnableConfig
 from services.jaaz_service import JaazService
-from tools.video_generation.video_canvas_utils import send_video_start_notification, process_video_result
+from tools.video_generation.video_canvas_utils import (
+    send_video_start_notification,
+    process_video_result,
+)
 from .utils.image_utils import process_input_image
 
 
@@ -13,19 +16,19 @@ class GenerateVideoByKlingV2InputSchema(BaseModel):
     )
     negative_prompt: str = Field(
         default="",
-        description="Optional. Negative prompt to specify what you don't want in the video."
+        description="Optional. Negative prompt to specify what you don't want in the video.",
     )
     guidance_scale: float = Field(
         default=0.5,
-        description="Optional. Guidance scale for generation (0.0 to 1.0). Higher values follow the prompt more closely."
+        description="Optional. Guidance scale for generation (0.0 to 1.0). Higher values follow the prompt more closely.",
     )
     aspect_ratio: str = Field(
         default="16:9",
-        description="Optional. The aspect ratio of the video. Allowed values: 1:1, 16:9, 4:3, 21:9"
+        description="Optional. The aspect ratio of the video. Allowed values: 1:1, 16:9, 4:3, 21:9",
     )
     duration: int = Field(
         default=5,
-        description="Optional. The duration of the video in seconds. Use 5 by default. Allowed values: 5, 10."
+        description="Optional. The duration of the video in seconds. Use 5 by default. Allowed values: 5, 10.",
     )
     input_images: list[str] = Field(
         description="Required. Images to use as reference or starting frame. Pass a list of image_id here, e.g. ['im_jurheut7.png']. Only the first image will be used as start_image."
@@ -33,9 +36,11 @@ class GenerateVideoByKlingV2InputSchema(BaseModel):
     tool_call_id: Annotated[str, InjectedToolCallId]
 
 
-@tool("generate_video_by_kling_v2_jaaz",
-      description="Generate high-quality videos using Kling V2.1 model. Supports image-to-video generation with advanced controls like negative prompts and guidance scale.",
-      args_schema=GenerateVideoByKlingV2InputSchema)
+@tool(
+    "generate_video_by_kling_v2_jaaz",
+    description="Generate high-quality videos using Kling V2.1 model. Supports image-to-video generation with advanced controls like negative prompts and guidance scale.",
+    args_schema=GenerateVideoByKlingV2InputSchema,
+)
 async def generate_video_by_kling_v2_jaaz(
     prompt: str,
     input_images: list[str],
@@ -62,12 +67,12 @@ async def generate_video_by_kling_v2_jaaz(
         # Validate input_images is provided and not empty
         if not input_images or len(input_images) == 0:
             raise ValueError(
-                "input_images is required and cannot be empty. Please provide at least one image.")
+                "input_images is required and cannot be empty. Please provide at least one image."
+            )
 
         # Send start notification
         await send_video_start_notification(
-            session_id,
-            f"Starting Kling video generation..."
+            session_id, f"Starting Kling video generation..."
         )
 
         # Process input images (use first image as start_image)
@@ -75,10 +80,12 @@ async def generate_video_by_kling_v2_jaaz(
         processed_image = await process_input_image(first_image)
         if not processed_image:
             raise ValueError(
-                f"Failed to process input image: {first_image}. Please check if the image exists and is valid.")
+                f"Failed to process input image: {first_image}. Please check if the image exists and is valid."
+            )
 
         print(
-            f"Using first input image as start image for Kling video generation: {first_image}")
+            f"Using first input image as start image for Kling video generation: {first_image}"
+        )
 
         # Create Jaaz service and generate video
         jaaz_service = JaazService()

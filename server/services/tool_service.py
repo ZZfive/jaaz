@@ -263,7 +263,7 @@ async def register_comfy_tools() -> Dict[str, BaseTool]:
     """
     dynamic_comfy_tools: Dict[str, BaseTool] = {}
     try:
-        workflows = await db_service.list_comfy_workflows()
+        workflows = await db_service.list_comfy_workflows()  # 获取所有ComfyUI工作流
     except Exception as exc:  # pragma: no cover
         print("[comfy_dynamic] Failed to list comfy workflows:", exc)
         traceback.print_stack()
@@ -271,7 +271,9 @@ async def register_comfy_tools() -> Dict[str, BaseTool]:
 
     for wf in workflows:
         try:
-            tool_fn = build_tool(wf)
+            tool_fn = build_tool(
+                wf
+            )  # 基于当前的工作流动态构建可用langchain使用工具函数
             # Export with a unique python identifier so that `dir(module)` works
             unique_name = f"comfyui_{wf['name']}"
             dynamic_comfy_tools[unique_name] = tool_fn
