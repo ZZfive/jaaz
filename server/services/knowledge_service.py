@@ -85,7 +85,9 @@ class KnowledgeService:
 
         return formatted_list
 
-    async def update_enabled_knowledge_data(self, knowledge_data_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def update_enabled_knowledge_data(
+        self, knowledge_data_list: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         更新启用的知识库完整数据
 

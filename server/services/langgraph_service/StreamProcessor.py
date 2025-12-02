@@ -18,7 +18,9 @@ class StreamProcessor:
         self,
         session_id: str,
         db_service: Any,
-        websocket_service: Callable[[str, Dict[str, Any]], Awaitable[None]],
+        websocket_service: Callable[
+            [str, Dict[str, Any]], Awaitable[None]
+        ],  # 进行数据传输的websocket服务
     ):
         self.session_id = session_id
         self.db_service = db_service
@@ -46,7 +48,7 @@ class StreamProcessor:
         async for chunk in compiled_swarm.astream(
             {"messages": messages},
             config=context,
-            stream_mode=["messages", "custom", 'values'],
+            stream_mode=["messages", "custom", 'values'],  # 设置订阅的三种事件类型
         ):  # 此处的流式处理就已经是在执行智能体群组，chunk就是返回的流式事件结果
             await self._handle_chunk(chunk)
 
@@ -129,7 +131,9 @@ class StreamProcessor:
 
     async def _handle_tool_calls(self, tool_calls: List[ToolCall]) -> None:
         """处理工具调用"""
-        self.tool_calls = [tc for tc in tool_calls if tc.get('name')]
+        self.tool_calls = [
+            tc for tc in tool_calls if tc.get('name')
+        ]  # 获取工具调用列表
         print('😘tool_call event', tool_calls)
 
         # 需要确认的工具列表

@@ -20,7 +20,7 @@ class ToolConfirmationManager:
     def __init__(self):
         self.pending_confirmations: Dict[str, ToolConfirmationRequest] = (
             {}
-        )  # 所有待确认的工具调用请求
+        )  # 记录所有待确认的工具调用请求
         self.confirmation_timeout = timedelta(minutes=5)  # 5分钟超时
 
     async def request_confirmation(
@@ -61,7 +61,7 @@ class ToolConfirmationManager:
                 return
             await asyncio.sleep(0.1)  # 等待0.1秒后继续轮询
 
-    def confirm_tool(self, tool_call_id: str) -> bool:
+    def confirm_tool(self, tool_call_id: str) -> bool:  # 给前端确认工具调用
         """确认工具调用"""
         if tool_call_id in self.pending_confirmations:
             self.pending_confirmations[tool_call_id].confirmed = True

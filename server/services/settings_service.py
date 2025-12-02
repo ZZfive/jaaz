@@ -25,8 +25,10 @@ import traceback
 import json
 
 # 用户数据目录路径，优先使用环境变量，否则使用默认路径
-USER_DATA_DIR = os.getenv("USER_DATA_DIR", os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "user_data"))
+USER_DATA_DIR = os.getenv(
+    "USER_DATA_DIR",
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), "user_data"),
+)
 
 # 全局设置配置缓存，用于在应用运行时快速访问设置
 app_settings = {}
@@ -36,7 +38,7 @@ app_settings = {}
 DEFAULT_SETTINGS = {
     "proxy": "system",  # 代理设置：'' (不使用代理), 'system' (使用系统代理), 或具体的代理URL地址
     "enabled_knowledge": [],  # 启用的知识库ID列表（保持兼容性）
-    "enabled_knowledge_data": []  # 启用的知识库完整数据列表
+    "enabled_knowledge_data": [],  # 启用的知识库完整数据列表
 }
 
 
@@ -59,10 +61,10 @@ class SettingsService:
         设置项目根目录和配置文件路径。
         配置文件路径可通过环境变量 SETTINGS_PATH 自定义。
         """
-        self.root_dir = os.path.dirname(
-            os.path.dirname(os.path.dirname(__file__)))
+        self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         self.settings_file = os.getenv(
-            "SETTINGS_PATH", os.path.join(USER_DATA_DIR, "settings.json"))
+            "SETTINGS_PATH", os.path.join(USER_DATA_DIR, "settings.json")
+        )
 
     async def exists_settings(self):
         """
@@ -104,7 +106,11 @@ class SettingsService:
             # 与默认设置合并，确保所有键都存在
             merged_settings = {**DEFAULT_SETTINGS}
             for key, value in settings.items():
-                if key in merged_settings and isinstance(merged_settings[key], dict) and isinstance(value, dict):
+                if (
+                    key in merged_settings
+                    and isinstance(merged_settings[key], dict)
+                    and isinstance(value, dict)
+                ):
                     # 对于字典类型的设置，进行深度合并
                     merged_settings[key].update(value)
                 else:
@@ -147,7 +153,11 @@ class SettingsService:
             # 与默认设置合并
             merged_settings = {**DEFAULT_SETTINGS}
             for key, value in settings.items():
-                if key in merged_settings and isinstance(merged_settings[key], dict) and isinstance(value, dict):
+                if (
+                    key in merged_settings
+                    and isinstance(merged_settings[key], dict)
+                    and isinstance(value, dict)
+                ):
                     merged_settings[key].update(value)
                 else:
                     merged_settings[key] = value
@@ -216,12 +226,13 @@ class SettingsService:
             dict: 操作结果
         """
         # 同时更新ID列表和完整数据
-        knowledge_ids = [kb.get('id', '')
-                         for kb in knowledge_data_list if kb.get('id')]
-        return await self.update_settings({
-            "enabled_knowledge": knowledge_ids,
-            "enabled_knowledge_data": knowledge_data_list
-        })
+        knowledge_ids = [kb.get('id', '') for kb in knowledge_data_list if kb.get('id')]
+        return await self.update_settings(
+            {
+                "enabled_knowledge": knowledge_ids,
+                "enabled_knowledge_data": knowledge_data_list,
+            }
+        )
 
     def create_default_settings(self):
         """
@@ -278,7 +289,11 @@ class SettingsService:
 
             # 合并新数据到现有设置
             for key, value in data.items():
-                if key in existing_settings and isinstance(existing_settings[key], dict) and isinstance(value, dict):
+                if (
+                    key in existing_settings
+                    and isinstance(existing_settings[key], dict)
+                    and isinstance(value, dict)
+                ):
                     # 对于字典类型，进行深度合并而不是替换
                     existing_settings[key].update(value)
                 else:
