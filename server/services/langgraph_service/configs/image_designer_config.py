@@ -3,9 +3,9 @@ from typing import List
 from models.tool_model import ToolInfoJson
 from .base_config import BaseAgentConfig, HandoffConfig
 
+
 class ImageDesignerAgentConfig(BaseAgentConfig):
-    """图像设计智能体 - 专门负责图像生成
-    """
+    """图像设计智能体 - 专门负责图像生成"""
 
     def __init__(self, tool_list: List[ToolInfoJson], system_prompt: str = "") -> None:
         batch_generation_prompt = """
@@ -36,8 +36,9 @@ When image generation fails, you MUST:
 IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with helpful guidance for the user.
 """
 
-        full_system_prompt = system_prompt + \
-            batch_generation_prompt + error_handling_prompt
+        full_system_prompt = (
+            system_prompt + batch_generation_prompt + error_handling_prompt
+        )
 
         # 图像设计智能体不需要切换到其他智能体
         handoffs: List[HandoffConfig] = [
@@ -45,7 +46,7 @@ IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with he
                 'agent_name': 'video_designer',
                 'description': """
                         Transfer user to the video_designer. If user wants to generate video, transfer to video_designer.
-                        """
+                        """,
             }
         ]
 
@@ -53,5 +54,5 @@ IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with he
             name='image_designer',
             tools=tool_list,
             system_prompt=full_system_prompt,
-            handoffs=handoffs
+            handoffs=handoffs,
         )

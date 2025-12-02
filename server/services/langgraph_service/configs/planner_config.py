@@ -3,8 +3,7 @@ from .base_config import BaseAgentConfig, HandoffConfig
 
 
 class PlannerAgentConfig(BaseAgentConfig):
-    """规划智能体 - 负责制定执行计划
-    """
+    """规划智能体 - 负责制定执行计划"""
 
     def __init__(self) -> None:
         system_prompt = """
@@ -43,7 +42,7 @@ class PlannerAgentConfig(BaseAgentConfig):
                 'agent_name': 'image_video_creator',
                 'description': """
                         Transfer user to the image_video_creator. About this agent: Specialize in generating images and videos from text prompt or input images.
-                        """
+                        """,
             }
         ]
 
@@ -51,5 +50,5 @@ class PlannerAgentConfig(BaseAgentConfig):
             name='planner',
             tools=[{'id': 'write_plan', 'provider': 'system'}],
             system_prompt=system_prompt,
-            handoffs=handoffs
+            handoffs=handoffs,
         )

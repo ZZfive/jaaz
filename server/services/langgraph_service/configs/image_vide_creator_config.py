@@ -43,6 +43,7 @@ Discreet modular grid lines and data glyphs fade into matte charcoal background,
 3. If it is a video generation task, use video generation tools to generate the video. You can choose to generate the necessary images first, and then use the images to generate the video, or directly generate the video using text prompt.
 """
 
+
 class ImageVideoCreatorAgentConfig(BaseAgentConfig):
     def __init__(self, tool_list: List[ToolInfoJson]) -> None:
         image_input_detection_prompt = """
@@ -86,10 +87,12 @@ When image generation fails, you MUST:
 IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with helpful guidance for the user.
 """
 
-        full_system_prompt = system_prompt + \
-            image_input_detection_prompt + \
-            batch_generation_prompt + \
-            error_handling_prompt
+        full_system_prompt = (
+            system_prompt
+            + image_input_detection_prompt
+            + batch_generation_prompt
+            + error_handling_prompt
+        )
 
         # 图像设计智能体不需要切换到其他智能体
         handoffs: List[HandoffConfig] = []
@@ -98,5 +101,5 @@ IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with he
             name='image_video_creator',
             tools=tool_list,
             system_prompt=full_system_prompt,
-            handoffs=handoffs
+            handoffs=handoffs,
         )

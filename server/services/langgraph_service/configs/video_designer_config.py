@@ -4,8 +4,7 @@ from .base_config import BaseAgentConfig, HandoffConfig
 
 
 class VideoDesignerAgentConfig(BaseAgentConfig):
-    """视频设计智能体 - 专门负责视频生成
-    """
+    """视频设计智能体 - 专门负责视频生成"""
 
     def __init__(self, tool_list: List[ToolInfoJson]) -> None:
         video_generation_prompt = """
@@ -47,7 +46,7 @@ IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with he
                 'agent_name': 'image_designer',
                 'description': """
                         Transfer user to the image_designer. About this agent: Specialize in generating images.
-                        """
+                        """,
             },
         ]
 
@@ -55,5 +54,5 @@ IMPORTANT: Never ignore tool errors. Always respond to failed tool calls with he
             name='video_designer',
             tools=tool_list,
             system_prompt=full_system_prompt,
-            handoffs=handoffs
+            handoffs=handoffs,
         )
