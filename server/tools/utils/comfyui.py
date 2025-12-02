@@ -22,26 +22,30 @@ async def detect_file_type_comprehensive(url):
     try:
         # 首先尝试通过HTTP头部判断
         async with HttpClient.create() as client:
-            response = await client.head(url)
-            content_type = response.headers.get("content-type", "").lower()
+            response = await client.head(url)  # 获取文件头部信息
+            content_type = response.headers.get(
+                "content-type", ""
+            ).lower()  # 获取文件类型
 
             if content_type.startswith("image/"):
-                return "image"
+                return "image"  # 如果文件类型是图片，返回图片
             elif content_type.startswith("video/"):
-                return "video"
+                return "video"  # 如果文件类型是视频，返回视频
 
         # 如果Content-Type不明确，检查URL扩展名
         if any(fmt in url.lower() for fmt in IMAGE_FORMATS):
-            return "image"
+            return "image"  # 如果文件类型是图片，返回图片
         elif any(fmt in url.lower() for fmt in VIDEO_FORMATS):
-            return "video"
+            return "video"  # 如果文件类型是视频，返回视频
 
         # 默认返回image
-        return "image"
+        return "image"  # 如果文件类型不确定，返回图片
 
     except Exception:
         # 出错时回退到扩展名检查
-        return "image" if any(fmt in url.lower() for fmt in IMAGE_FORMATS) else "video"
+        return (
+            "image" if any(fmt in url.lower() for fmt in IMAGE_FORMATS) else "video"
+        )  # 如果文件类型不确定，返回图片
 
 
 def get_asset_path(filename):
@@ -60,7 +64,7 @@ def get_asset_path(filename):
     return os.path.join(base_path, "asset", filename)
 
 
-class ComfyUIGenerator():
+class ComfyUIGenerator:
     """ComfyUI image generator implementation"""
 
     def __init__(self):
@@ -143,7 +147,7 @@ class ComfyUIGenerator():
         return mime_type, width, height, filename
 
 
-class ComfyUIWorkflowRunner():
+class ComfyUIWorkflowRunner:
     """ComfyUI image generator implementation"""
 
     def __init__(self, workflow_dict, base_url):

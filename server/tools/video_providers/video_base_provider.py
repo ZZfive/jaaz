@@ -7,30 +7,34 @@ class VideoProviderBase(ABC):
     """Video generation provider base class"""
 
     # Class attribute: provider registry
-    _providers: Dict[str, Type['VideoProviderBase']] = {}
+    _providers: Dict[str, Type['VideoProviderBase']] = {}  # 存储所有注册的视频提供者
 
-    def __init_subclass__(cls, provider_name: Optional[str] = None, **kwargs: Any):
+    def __init_subclass__(  # 自动注册：此函数在子类被定义时自动调用
+        cls, provider_name: Optional[str] = None, **kwargs: Any
+    ):
         """Auto-register provider"""
         super().__init_subclass__(**kwargs)
         if provider_name:
             cls._providers[provider_name] = cls
 
     @classmethod
-    def create_provider(cls, provider_name: str) -> 'VideoProviderBase':
+    def create_provider(
+        cls, provider_name: str
+    ) -> 'VideoProviderBase':  # 创建提供者实例
         """Factory method: create provider instance"""
         if provider_name not in cls._providers:
             raise ValueError(f"Unknown provider: {provider_name}")
 
-        provider_class = cls._providers[provider_name]
+        provider_class = cls._providers[provider_name]  # 获取提供者类
         return provider_class()  # Let each provider handle its own configuration
 
     @classmethod
-    def get_available_providers(cls) -> List[str]:
+    def get_available_providers(cls) -> List[str]:  # 获取所有可用的提供者
         """Get all available providers"""
         return list(cls._providers.keys())
 
     @abstractmethod
-    async def generate(
+    async def generate(  # 抽象的视频生成方法
         self,
         prompt: str,
         model: str,
@@ -39,7 +43,7 @@ class VideoProviderBase(ABC):
         aspect_ratio: str = "16:9",
         input_images: Optional[list[str]] = None,
         camera_fixed: bool = True,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         """
         Generate video and return video URL

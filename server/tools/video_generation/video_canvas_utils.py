@@ -42,9 +42,7 @@ canvas_lock_manager = CanvasLockManager()
 
 
 async def save_video_to_canvas(
-    session_id: str,
-    canvas_id: str,
-    video_url: str
+    session_id: str, canvas_id: str, video_url: str
 ) -> Tuple[str, Dict[str, Any], Dict[str, Any]]:
     """
     Download video, save to files, create canvas element and return data
@@ -93,7 +91,9 @@ async def save_video_to_canvas(
         )
 
         # Update canvas data
-        canvas_data: Optional[Dict[str, Any]] = await db_service.get_canvas_data(canvas_id)
+        canvas_data: Optional[Dict[str, Any]] = await db_service.get_canvas_data(
+            canvas_id
+        )
         if canvas_data is None:
             canvas_data = {}
         if "data" not in canvas_data:
@@ -103,8 +103,7 @@ async def save_video_to_canvas(
         if "files" not in canvas_data["data"]:
             canvas_data["data"]["files"] = {}
 
-        canvas_data["data"]["elements"].append(
-            new_video_element)  # type: ignore
+        canvas_data["data"]["elements"].append(new_video_element)  # type: ignore
         canvas_data["data"]["files"][file_id] = file_data
 
         # Save updated canvas data
@@ -115,10 +114,9 @@ async def save_video_to_canvas(
 
 async def send_video_start_notification(session_id: str, message: str) -> None:
     """Send WebSocket notification about video generation start"""
-    await send_to_websocket(session_id, {
-        "type": "video_generation_started",
-        "message": message
-    })
+    await send_to_websocket(
+        session_id, {"type": "video_generation_started", "message": message}
+    )
 
 
 async def send_video_completion_notification(
@@ -126,7 +124,7 @@ async def send_video_completion_notification(
     canvas_id: str,
     new_video_element: Dict[str, Any],
     file_data: Dict[str, Any],
-    video_url: str
+    video_url: str,
 ) -> None:
     """Send WebSocket notification about video generation completion"""
     await broadcast_session_update(
@@ -144,10 +142,7 @@ async def send_video_completion_notification(
 async def send_video_error_notification(session_id: str, error_message: str) -> None:
     """Send WebSocket notification about video generation error"""
     print(f"🎥 Video generation error: {error_message}")
-    await send_to_websocket(session_id, {
-        "type": "error",
-        "error": error_message
-    })
+    await send_to_websocket(session_id, {"type": "error", "error": error_message})
 
 
 def format_video_success_message(filename: str) -> str:
@@ -156,10 +151,7 @@ def format_video_success_message(filename: str) -> str:
 
 
 async def process_video_result(
-    video_url: str,
-    session_id: str,
-    canvas_id: str,
-    provider_name: str = ""
+    video_url: str, session_id: str, canvas_id: str, provider_name: str = ""
 ) -> str:
     """
     Complete video processing pipeline: save, update canvas, notify
@@ -176,9 +168,7 @@ async def process_video_result(
     try:
         # Save video to canvas and get file info
         filename, file_data, new_video_element = await save_video_to_canvas(
-            session_id=session_id,
-            canvas_id=canvas_id,
-            video_url=video_url
+            session_id=session_id, canvas_id=canvas_id, video_url=video_url
         )
 
         # Send completion notification
@@ -187,7 +177,7 @@ async def process_video_result(
             canvas_id=canvas_id,
             new_video_element=new_video_element,
             file_data=file_data,
-            video_url=file_data["dataURL"]
+            video_url=file_data["dataURL"],
         )
 
         provider_info = f" using {provider_name}" if provider_name else ""
@@ -253,12 +243,14 @@ async def generate_new_video_element(
 ) -> Dict[str, Any]:
     """Generate new video element for canvas"""
     if canvas_data is None:
-        canvas = await db_service.get_canvas_data(canvas_id)
+        canvas = await db_service.get_canvas_data(canvas_id)  # 获取画布数据
         if canvas is None:
-            canvas = {"data": {}}
-        canvas_data = canvas.get("data", {})
+            canvas = {"data": {}}  # 如果画布数据为空，则创建一个空的数据
+        canvas_data = canvas.get("data", {})  # 获取画布数据中的data部分
 
-    new_x, new_y = await find_next_best_element_position(canvas_data)
+    new_x, new_y = await find_next_best_element_position(
+        canvas_data
+    )  # 计算新元素的x、y坐标，确保新元素不会与其他元素重叠
 
     return {
         "type": "video",

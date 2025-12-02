@@ -56,7 +56,7 @@ async def generate_image_with_provider(
         str: 生成结果消息
     """
 
-    provider_instance = IMAGE_PROVIDERS.get(provider)
+    provider_instance = IMAGE_PROVIDERS.get(provider)  # 获取提供商实例
     if not provider_instance:
         raise ValueError(f"Unknown provider: {provider}")
 
@@ -65,7 +65,9 @@ async def generate_image_with_provider(
     if input_images:
         processed_input_images = []
         for image_path in input_images:
-            processed_image = await process_input_image(image_path)
+            processed_image = await process_input_image(
+                image_path
+            )  # 将输入转base64格式
             if processed_image:
                 processed_input_images.append(processed_image)
 
