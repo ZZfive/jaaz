@@ -25,10 +25,12 @@ class ReplicateImageProvider(ImageProviderBase):
         return {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "Prefer": "wait"
+            "Prefer": "wait",
         }
 
-    async def _make_request(self, url: str, headers: dict[str, str], data: dict[str, Any]) -> dict[str, Any]:
+    async def _make_request(
+        self, url: str, headers: dict[str, str], data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Send HTTP request and handle response
 
@@ -36,8 +38,7 @@ class ReplicateImageProvider(ImageProviderBase):
             dict[str, Any]: Response data from Replicate API
         """
         async with HttpClient.create_aiohttp() as session:
-            print(
-                f'🦄 Replicate API request: {url}, model: {data["input"]["prompt"]}')
+            print(f'🦄 Replicate API request: {url}, model: {data["input"]["prompt"]}')
             async with session.post(url, headers=headers, json=data) as response:
                 # Parse JSON data
                 json_data = await response.json()
@@ -59,10 +60,12 @@ class ReplicateImageProvider(ImageProviderBase):
         if output == '':
             if res.get('detail', '') != '':
                 raise Exception(
-                    f'Replicate image generation failed: {res.get("detail", "")}')
+                    f'Replicate image generation failed: {res.get("detail", "")}'
+                )
             else:
                 raise Exception(
-                    'Replicate image generation failed: no output url found')
+                    'Replicate image generation failed: no output url found'
+                )
 
         image_id = generate_image_id()
         print('🦄 image generation image_id', image_id)
@@ -81,7 +84,7 @@ class ReplicateImageProvider(ImageProviderBase):
         model: str,
         aspect_ratio: str = "1:1",
         input_images: Optional[list[str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """
         Generate image using Replicate API
@@ -113,7 +116,8 @@ class ReplicateImageProvider(ImageProviderBase):
                 data['input']['input_image'] = input_images[0]
                 if len(input_images) > 1:
                     print(
-                        "Warning: Replicate format only supports single image input. Using first image.")
+                        "Warning: Replicate format only supports single image input. Using first image."
+                    )
 
             # Make request
             res = await self._make_request(url, headers, data)

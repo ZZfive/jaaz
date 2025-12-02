@@ -13,6 +13,7 @@ from services.config_service import config_service
 
 class JaazImagesResponse(BaseModel):
     """Image response class, Jaaz API return format, consistent with OpenAI"""
+
     created: int
     """The Unix timestamp (in seconds) of when the image was created."""
 
@@ -22,6 +23,7 @@ class JaazImagesResponse(BaseModel):
 
 class TaskSearchResponse(BaseModel):
     """Task search response model"""
+
     success: bool
     data: Dict[str, Any]
 
@@ -61,10 +63,12 @@ class JaazImageProvider(ImageProviderBase):
         """Build request headers"""
         return {
             "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
-    async def _search_cloud_task(self, prompt: str) -> Optional[Dict[str, Any]]:
+    async def _search_cloud_task(
+        self, prompt: str
+    ) -> Optional[Dict[str, Any]]:  # 查询任务
         """
         Search for existing cloud task
 
@@ -84,16 +88,21 @@ class JaazImageProvider(ImageProviderBase):
             }
 
             async with HttpClient.create_aiohttp() as session:
-                async with session.post(url, headers=headers, json=search_data) as response:
+                async with session.post(
+                    url, headers=headers, json=search_data
+                ) as response:
                     if response.status != 200:
                         print(f'🦄 Task search failed: HTTP {response.status}')
                         return None
 
                     json_data = await response.json()
-                    if json_data.get('success') and json_data.get('data', {}).get('found'):
+                    if json_data.get('success') and json_data.get('data', {}).get(
+                        'found'
+                    ):
                         task = json_data['data']['task']
                         print(
-                            f'🦄 Found cloud task: {task.get("id")}, status: {task.get("status")}')
+                            f'🦄 Found cloud task: {task.get("id")}, status: {task.get("status")}'
+                        )
                         return task
 
                     return None
@@ -102,7 +111,9 @@ class JaazImageProvider(ImageProviderBase):
             print(f'🦄 Error searching cloud task: {e}')
             return None
 
-    async def _wait_for_task_completion(self, prompt: str, max_wait_time: int = 300) -> Optional[Dict[str, Any]]:
+    async def _wait_for_task_completion(
+        self, prompt: str, max_wait_time: int = 300
+    ) -> Optional[Dict[str, Any]]:
         """
         Wait for cloud task to complete
 
@@ -114,28 +125,33 @@ class JaazImageProvider(ImageProviderBase):
         Returns:
             Task data if succeeded, None otherwise
         """
-        start_time = asyncio.get_event_loop().time()
-        no_task_retry_count = 0
-        max_no_task_retries = 5
+        start_time = asyncio.get_event_loop().time()  # 获取当前时间
+        no_task_retry_count = 0  # 重试次数
+        max_no_task_retries = 5  # 最大重试次数
 
         while True:
-            task = await self._search_cloud_task(prompt)
+            task = await self._search_cloud_task(prompt)  # 查询任务
 
             if not task:
-                no_task_retry_count += 1
-                if no_task_retry_count <= max_no_task_retries:
+                no_task_retry_count += 1  # 重试次数加1
+                if (
+                    no_task_retry_count <= max_no_task_retries
+                ):  # 如果重试次数小于最大重试次数
                     print(
-                        f'🦄 No cloud task found, retrying ({no_task_retry_count}/{max_no_task_retries})...')
-                    await asyncio.sleep(3)
+                        f'🦄 No cloud task found, retrying ({no_task_retry_count}/{max_no_task_retries})...'
+                    )
+                    await asyncio.sleep(3)  # 等待3秒后继续查询
                     continue
                 else:
-                    print('🦄 No cloud task found after 5 retries')
-                    return None
+                    print(
+                        '🦄 No cloud task found after 5 retries'
+                    )  # 如果重试次数大于最大重试次数，则返回None
+                    return None  # 如果重试次数大于最大重试次数，则返回None
 
             # Reset retry count when task is found
-            no_task_retry_count = 0
+            no_task_retry_count = 0  # 重试次数归0
 
-            status = task.get('status')
+            status = task.get('status')  # 获取任务状态
             print(f'🦄 Cloud task status: {status}')
 
             if status == 'succeeded':
@@ -146,19 +162,24 @@ class JaazImageProvider(ImageProviderBase):
                 return None
             elif status == 'processing':
                 # Check if we've exceeded max wait time
-                elapsed = asyncio.get_event_loop().time() - start_time
-                if elapsed > max_wait_time:
+                elapsed = (
+                    asyncio.get_event_loop().time() - start_time
+                )  # 获取当前时间减去开始时间
+                if elapsed > max_wait_time:  # 如果时间大于最大等待时间
                     print(
-                        f'🦄 Timeout waiting for cloud task completion ({max_wait_time}s)')
-                    return None
+                        f'🦄 Timeout waiting for cloud task completion ({max_wait_time}s)'
+                    )
+                    return None  # 如果时间大于最大等待时间，则返回None
 
                 print('🦄 Cloud task still processing, waiting 2 seconds...')
-                await asyncio.sleep(2)
+                await asyncio.sleep(2)  # 等待2秒后继续查询
             else:
                 print(f'🦄 Unknown cloud task status: {status}')
-                return None
+                return None  # 如果任务状态未知，则返回None
 
-    async def _process_cloud_task_result(self, task: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None) -> tuple[str, int, int, str]:
+    async def _process_cloud_task_result(
+        self, task: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None
+    ) -> tuple[str, int, int, str]:
         """
         Process cloud task result and download image
 
@@ -178,15 +199,15 @@ class JaazImageProvider(ImageProviderBase):
         # Download and save the image from cloud result
         image_id = generate_image_id()
         mime_type, width, height, extension = await get_image_info_and_save(
-            str(result_url),
-            os.path.join(FILES_DIR, f'{image_id}'),
-            metadata=metadata
+            str(result_url), os.path.join(FILES_DIR, f'{image_id}'), metadata=metadata
         )
 
         filename = f'{image_id}.{extension}'
         return mime_type, width, height, filename
 
-    async def _make_request(self, url: str, headers: Dict[str, str], data: Dict[str, Any]) -> JaazImagesResponse:
+    async def _make_request(  # 下发任务
+        self, url: str, headers: Dict[str, str], data: Dict[str, Any]
+    ) -> JaazImagesResponse:
         """
         Send HTTP request and handle response
 
@@ -195,7 +216,8 @@ class JaazImageProvider(ImageProviderBase):
         """
         async with HttpClient.create_aiohttp() as session:
             print(
-                f'🦄 Jaaz API request: {url}, model: {data["model"]}, prompt: {data["prompt"]}')
+                f'🦄 Jaaz API request: {url}, model: {data["model"]}, prompt: {data["prompt"]}'
+            )
 
             async with session.post(url, headers=headers, json=data) as response:
                 if response.status != 200:
@@ -214,7 +236,7 @@ class JaazImageProvider(ImageProviderBase):
         self,
         res: JaazImagesResponse,
         error_prefix: str = "Jaaz",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> tuple[str, int, int, str]:
         """
         Process ImagesResponse and save image
@@ -232,9 +254,7 @@ class JaazImageProvider(ImageProviderBase):
                 image_url = image_data.url
                 image_id = generate_image_id()
                 mime_type, width, height, extension = await get_image_info_and_save(
-                    image_url,
-                    os.path.join(FILES_DIR, f'{image_id}'),
-                    metadata=metadata
+                    image_url, os.path.join(FILES_DIR, f'{image_id}'), metadata=metadata
                 )
 
                 filename = f'{image_id}.{extension}'
@@ -242,7 +262,8 @@ class JaazImageProvider(ImageProviderBase):
 
         # If no valid image data found
         raise Exception(
-            f'{error_prefix} image generation failed: No valid image data in response')
+            f'{error_prefix} image generation failed: No valid image data in response'
+        )
 
     async def generate(
         self,
@@ -251,7 +272,7 @@ class JaazImageProvider(ImageProviderBase):
         aspect_ratio: str = "1:1",
         input_images: Optional[list[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """
         Generate image using Jaaz API service
@@ -268,7 +289,7 @@ class JaazImageProvider(ImageProviderBase):
                 input_images=input_images,
                 aspect_ratio=aspect_ratio,
                 metadata=metadata,
-                **kwargs
+                **kwargs,
             )
 
         # Replicate compatible logic
@@ -278,7 +299,7 @@ class JaazImageProvider(ImageProviderBase):
             aspect_ratio=aspect_ratio,
             input_images=input_images,
             metadata=metadata,
-            **kwargs
+            **kwargs,
         )
 
     async def _generate_replicate_image(
@@ -288,7 +309,7 @@ class JaazImageProvider(ImageProviderBase):
         aspect_ratio: str = "1:1",
         input_images: Optional[list[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """Generate Replicate format image"""
         try:
@@ -308,7 +329,8 @@ class JaazImageProvider(ImageProviderBase):
                 data['input_image'] = input_images[0]
                 if len(input_images) > 1:
                     print(
-                        "Warning: Replicate format only supports single image input. Using first image.")
+                        "Warning: Replicate format only supports single image input. Using first image."
+                    )
 
             res = await self._make_request(url, headers, data)
             return await self._process_response(res, "Jaaz", metadata)
@@ -339,7 +361,7 @@ class JaazImageProvider(ImageProviderBase):
         input_images: Optional[list[str]] = None,
         aspect_ratio: str = "1:1",
         metadata: Optional[Dict[str, Any]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """
         Generate image using Jaaz API service calling OpenAI model

@@ -110,7 +110,7 @@ class VolcesProvider(ImageProviderBase):
             client = self._create_client()
             width, height = self._calculate_dimensions(aspect_ratio)
 
-            if input_images:
+            if input_images:  # 编辑任务直接走火山的api
                 # input_image should be the file path
                 # volces does not support openai client to edit image. But no pool required QVQ
                 config = config_service.app_config.get("volces", {})
@@ -155,7 +155,7 @@ class VolcesProvider(ImageProviderBase):
                         result = result_dict["data"][0]["url"]
                         print(f"👇SeedEdit Url: {result}")
 
-            else:
+            else:  # 生成任务用openai客户端实现
                 result = client.images.generate(
                     model=model,
                     prompt=prompt,

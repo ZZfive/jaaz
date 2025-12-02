@@ -2,16 +2,16 @@ from abc import ABC, abstractmethod
 from typing import Optional, Any, Tuple
 
 
-class ImageProviderBase(ABC):
+class ImageProviderBase(ABC):  # 定义图片提供商基类
     @abstractmethod
-    async def generate(
+    async def generate(  # 子类必须重载的函数
         self,
         prompt: str,
         model: str,
         aspect_ratio: str = "1:1",
         input_images: Optional[list[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Tuple[str, int, int, str]:
         """
         Generate image and return image details

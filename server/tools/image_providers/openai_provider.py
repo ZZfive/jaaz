@@ -17,7 +17,7 @@ class OpenAIImageProvider(ImageProviderBase):
         model: str,
         aspect_ratio: str = "1:1",
         input_images: Optional[list[str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """
         Generate image using OpenAI API
@@ -34,14 +34,13 @@ class OpenAIImageProvider(ImageProviderBase):
             raise ValueError("OpenAI API key is not configured")
 
         # Create OpenAI client
-        self.client = OpenAI(api_key=self.api_key,
-                             base_url=self.base_url or None)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url or None)
         try:
             # Remove openai/ prefix if present
             model = model.replace('openai/', '')
 
             # Determine if this is an edit operation or generation
-            if input_images and len(input_images) > 0:
+            if input_images and len(input_images) > 0:  # 编辑任务
                 # Image editing mode
                 input_image_path = input_images[0]
                 # For OpenAI, input_image should be the file path
@@ -52,9 +51,9 @@ class OpenAIImageProvider(ImageProviderBase):
                         model=model,
                         image=image_file,
                         prompt=prompt,
-                        n=kwargs.get("num_images", 1)
+                        n=kwargs.get("num_images", 1),
                     )
-            else:
+            else:  # 生成任务
                 # Image generation mode
                 # Map aspect ratio to size
                 size_map = {
@@ -62,9 +61,9 @@ class OpenAIImageProvider(ImageProviderBase):
                     "16:9": "1792x1024",
                     "9:16": "1024x1792",
                     "4:3": "1024x768",
-                    "3:4": "768x1024"
+                    "3:4": "768x1024",
                 }
-                size = size_map.get(aspect_ratio, "1024x1024")
+                size = size_map.get(aspect_ratio, "1024x1024")  # 根据长宽比确定图片大小
 
                 result = self.client.images.generate(
                     model=model,

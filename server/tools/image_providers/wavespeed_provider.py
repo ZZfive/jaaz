@@ -11,6 +11,7 @@ from utils.http_client import HttpClient
 
 class WavespeedResponse(BaseModel):
     """WaveSpeed API response format"""
+
     code: int
     data: dict[str, Any]
     message: Optional[str] = None
@@ -36,7 +37,9 @@ class WavespeedProvider(ImageProviderBase):
             'channel': channel,
         }
 
-    def _build_payload(self, prompt: str, input_images: Optional[list[str]] = None, **kwargs: Any) -> dict[str, Any]:
+    def _build_payload(
+        self, prompt: str, input_images: Optional[list[str]] = None, **kwargs: Any
+    ) -> dict[str, Any]:
         """Build request payload based on whether input images are provided"""
         if input_images and len(input_images) > 0:
             # Image editing mode
@@ -45,7 +48,7 @@ class WavespeedProvider(ImageProviderBase):
                 "images": input_images,
                 "guidance_scale": kwargs.get("guidance_scale", 3.5),
                 "num_images": kwargs.get("num_images", 1),
-                "safety_tolerance": str(kwargs.get("safety_tolerance", "2"))
+                "safety_tolerance": str(kwargs.get("safety_tolerance", "2")),
             }
         else:
             # Text-to-image mode
@@ -61,13 +64,17 @@ class WavespeedProvider(ImageProviderBase):
                 "strength": kwargs.get("strength", 0.8),
             }
 
-    def _get_model_for_request(self, model: str, input_images: Optional[list[str]] = None) -> str:
+    def _get_model_for_request(
+        self, model: str, input_images: Optional[list[str]] = None
+    ) -> str:
         """Get the appropriate model for the request"""
         if input_images and len(input_images) > 0:
             return 'wavespeed-ai/flux-kontext-pro/multi'
         return model
 
-    async def _poll_for_result(self, result_url: str, headers: dict[str, str]) -> str:
+    async def _poll_for_result(
+        self, result_url: str, headers: dict[str, str]
+    ) -> str:  # 轮询结果
         """Poll for image generation result"""
         async with HttpClient.create_aiohttp() as session:
             for _ in range(60):  # 最多等60秒
@@ -84,8 +91,7 @@ class WavespeedProvider(ImageProviderBase):
                         return outputs[0]
 
                     if status == "failed":
-                        raise Exception(
-                            f"WaveSpeed generation failed: {result_data}")
+                        raise Exception(f"WaveSpeed generation failed: {result_data}")
 
             raise Exception("WaveSpeed image generation timeout")
 
@@ -95,7 +101,7 @@ class WavespeedProvider(ImageProviderBase):
         model: str,
         aspect_ratio: str = "1:1",
         input_images: Optional[list[str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """
         Generate image using WaveSpeed API service
@@ -118,14 +124,19 @@ class WavespeedProvider(ImageProviderBase):
             endpoint = f"{self.api_url.rstrip('/')}/{request_model}"
 
             async with HttpClient.create_aiohttp() as session:
-                async with session.post(endpoint, json=payload, headers=headers) as response:
+                async with session.post(
+                    endpoint, json=payload, headers=headers
+                ) as response:  # 下发任务
                     response_json = await response.json()
 
-                    if response.status != 200 or response_json.get("code") != 200:
-                        raise Exception(
-                            f"WaveSpeed API error: {response_json}")
+                    if (
+                        response.status != 200 or response_json.get("code") != 200
+                    ):  # 如果任务下发失败
+                        raise Exception(f"WaveSpeed API error: {response_json}")
 
-                    result_url = response_json["data"]["urls"]["get"]
+                    result_url = response_json["data"]["urls"][
+                        "get"
+                    ]  # 获取用于轮询结果的url
 
                 # Poll for the result
                 image_url = await self._poll_for_result(result_url, headers)
@@ -133,8 +144,7 @@ class WavespeedProvider(ImageProviderBase):
                 # Save the image
                 image_id = generate_image_id()
                 mime_type, width, height, extension = await get_image_info_and_save(
-                    image_url,
-                    os.path.join(FILES_DIR, f'{image_id}')
+                    image_url, os.path.join(FILES_DIR, f'{image_id}')
                 )
                 filename = f'{image_id}.{extension}'
                 return mime_type, width, height, filename
