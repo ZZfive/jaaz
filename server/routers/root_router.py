@@ -147,10 +147,10 @@ async def list_tools() -> list[ToolInfoJson]:
 
 
 @router.get("/list_chat_sessions")
-async def list_chat_sessions():
+async def list_chat_sessions():  # 列出所有对话会话
     return await db_service.list_sessions()
 
 
 @router.get("/chat_session/{session_id}")
-async def get_chat_session(session_id: str):
+async def get_chat_session(session_id: str):  # 获取对话历史
     return await db_service.get_chat_history(session_id)

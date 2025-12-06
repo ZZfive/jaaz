@@ -49,7 +49,9 @@ async def handle_chat(data: Dict[str, Any]) -> None:
     # If there is only one message, create a new chat session
     if len(messages) == 1:
         # create new session
-        prompt = messages[0].get('content', '')
+        prompt = messages[0].get(
+            'content', ''
+        )  # TODO 此处的接口好像后问题，如果是获取纯文本的prompt，应该是messages[0]['content']['text']
         # TODO: Better way to determin when to create new chat session.
         await db_service.create_chat_session(
             session_id,

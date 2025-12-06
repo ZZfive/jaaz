@@ -121,31 +121,19 @@ async def get_proxy_status():
 
     if proxy_setting == 'no_proxy':
         # 不使用代理
-        return {
-            "enable": False,
-            "configured": True,
-            "message": "Proxy is disabled"
-        }
+        return {"enable": False, "configured": True, "message": "Proxy is disabled"}
     elif proxy_setting == 'system':
         # 使用系统代理
-        return {
-            "enable": True,
-            "configured": True,
-            "message": "Using system proxy"
-        }
+        return {"enable": True, "configured": True, "message": "Using system proxy"}
     elif proxy_setting.startswith(('http://', 'https://', 'socks4://', 'socks5://')):
         # 使用指定的代理URL
-        return {
-            "enable": True,
-            "configured": True,
-            "message": "Using custom proxy"
-        }
+        return {"enable": True, "configured": True, "message": "Using custom proxy"}
     else:
         # 代理设置格式不正确
         return {
             "enable": True,
             "configured": False,
-            "message": "Proxy configuration is invalid"
+            "message": "Proxy configuration is invalid",
         }
 
 
@@ -208,21 +196,23 @@ async def update_proxy_settings(request: Request):
     if not isinstance(proxy_data, dict) or "proxy" not in proxy_data:
         raise HTTPException(
             status_code=400,
-            detail="Invalid proxy configuration. Expected format: {'proxy': 'value'}")
+            detail="Invalid proxy configuration. Expected format: {'proxy': 'value'}",
+        )
 
     proxy_value = proxy_data["proxy"]
 
     # 验证代理值的格式
     if not isinstance(proxy_value, str):
-        raise HTTPException(
-            status_code=400,
-            detail="Proxy value must be a string")
+        raise HTTPException(status_code=400, detail="Proxy value must be a string")
 
     # 验证代理值的有效性
-    if proxy_value not in ['no_proxy', 'system'] and not proxy_value.startswith(('http://', 'https://', 'socks4://', 'socks5://')):
+    if proxy_value not in ['no_proxy', 'system'] and not proxy_value.startswith(
+        ('http://', 'https://', 'socks4://', 'socks5://')
+    ):
         raise HTTPException(
             status_code=400,
-            detail="Invalid proxy value. Must be 'no_proxy', 'system', or a valid proxy URL")
+            detail="Invalid proxy value. Must be 'no_proxy', 'system', or a valid proxy URL",
+        )
 
     # 更新代理设置
     result = await settings_service.update_settings({"proxy": proxy_value})
@@ -233,7 +223,7 @@ class CreateWorkflowRequest(BaseModel):
     name: str
     api_json: dict  # or str if you want it as string
     description: str
-    inputs: list   # or str if you want it as string
+    inputs: list  # or str if you want it as string
     outputs: str = None
 
 
@@ -252,12 +242,15 @@ async def create_workflow(request: CreateWorkflowRequest):
         api_json = json.dumps(request.api_json)
         inputs = json.dumps(request.inputs)
         outputs = json.dumps(request.outputs)
-        await db_service.create_comfy_workflow(name, api_json, request.description, inputs, outputs)
+        await db_service.create_comfy_workflow(
+            name, api_json, request.description, inputs, outputs
+        )
         await tool_service.initialize()
         return {"success": True}
     except Exception as e:
         raise HTTPException(
-            status_code=400, detail=f"Failed to create workflow: {str(e)}")
+            status_code=400, detail=f"Failed to create workflow: {str(e)}"
+        )
 
 
 @router.get("/comfyui/list_workflows")
@@ -278,11 +271,12 @@ async def comfyui_proxy(request: Request):
         # 从请求中获取ComfyUI的目标URL和路径
         data = await request.json()
         target_url = data.get("url")  # 前端传递的ComfyUI地址（如http://127.0.0.1:8188）
-        path = data.get("path", "")   # 请求的路径（如/system_stats）
+        path = data.get("path", "")  # 请求的路径（如/system_stats）
 
         if not target_url or not path:
             raise HTTPException(
-                status_code=400, detail="Missing 'url' or 'path' in request body")
+                status_code=400, detail="Missing 'url' or 'path' in request body"
+            )
 
         # 构造完整的ComfyUI请求URL
         full_url = f"{target_url}{path}"
@@ -294,8 +288,7 @@ async def comfyui_proxy(request: Request):
             return response.json()
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Proxy request failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Proxy request failed: {str(e)}")
 
 
 @router.get("/knowledge/enabled")
@@ -308,41 +301,29 @@ async def get_enabled_knowledge():
     """
     try:
         knowledge_list = list_user_enabled_knowledge()
-        return {
-            "success": True,
-            "data": knowledge_list,
-            "count": len(knowledge_list)
-        }
+        return {"success": True, "data": knowledge_list, "count": len(knowledge_list)}
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "data": []
-        }
+        return {"success": False, "error": str(e), "data": []}
 
 
 @router.get("/my_assets_dir_path")
 async def get_my_assets_dir_path():
     """
     获取用户的My Assets目录路径
-    
+
     Returns:
         dict: 包含目录路径的响应
     """
     from services.config_service import FILES_DIR
-    
+
     try:
         # 确保目录存在
         os.makedirs(FILES_DIR, exist_ok=True)
-        
+
         return {
             "success": True,
             "path": FILES_DIR,
-            "message": "My Assets directory path retrieved successfully"
+            "message": "My Assets directory path retrieved successfully",
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "path": ""
-        }
+        return {"success": False, "error": str(e), "path": ""}
