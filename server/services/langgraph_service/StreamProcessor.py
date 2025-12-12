@@ -61,7 +61,7 @@ class StreamProcessor:
         chunk_type = chunk[0]
 
         if chunk_type == 'values':
-            await self._handle_values_chunk(chunk[1])
+            await self._handle_values_chunk(chunk[1])  # 全量消息同步
         else:
             await self._handle_message_chunk(chunk[1][0])
 
@@ -97,30 +97,32 @@ class StreamProcessor:
         try:
             content = ai_message_chunk.content
 
-            if isinstance(ai_message_chunk, ToolMessage):
+            if isinstance(ai_message_chunk, ToolMessage):  # 工具执行结束后返回的结果
                 # 工具调用结果之后会在 values 类型中发送到前端，这里会更快出现一些
                 oai_message = convert_to_openai_messages([ai_message_chunk])[0]
                 print('👇toolcall res oai_message', oai_message)
                 await self.websocket_service(
                     self.session_id,
                     {
-                        'type': 'tool_call_result',
+                        'type': 'tool_call_result',  # 自定义的工具执行结果事件类型
                         'id': ai_message_chunk.tool_call_id,
                         'message': oai_message,
                     },
                 )
-            elif content:
-                # 发送文本内容
+            elif (
+                content
+            ):  # 工具执行或Agent切换过程中，content一般为空字符，如果存在，基本上的文本流程的增量输出
                 await self.websocket_service(
                     self.session_id, {'type': 'delta', 'text': content}
-                )
+                )  # 流式地将文本发送至前端
             elif (
                 hasattr(ai_message_chunk, 'tool_calls')
                 and ai_message_chunk.tool_calls
                 and ai_message_chunk.tool_calls[0].get('name')
-            ):
-                # 处理工具调用
-                await self._handle_tool_calls(ai_message_chunk.tool_calls)
+            ):  # 工具调用开始
+                await self._handle_tool_calls(
+                    ai_message_chunk.tool_calls
+                )  # 处理工具调用
 
             # 处理工具调用参数流
             if hasattr(ai_message_chunk, 'tool_call_chunks'):
@@ -148,7 +150,7 @@ class StreamProcessor:
         }
 
         for tool_call in self.tool_calls:
-            tool_name = tool_call.get('name')
+            tool_name = tool_call.get('name')  # 工具名称
 
             # 检查是否需要确认
             if tool_name in TOOLS_REQUIRING_CONFIRMATION:
