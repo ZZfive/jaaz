@@ -6,32 +6,32 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { ConfigsProvider } from '@/contexts/configs'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { useTheme } from '@/hooks/use-theme'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'  // 数据获取与缓存
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
-import { openDB } from 'idb'
-import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { openDB } from 'idb'  // 浏览器本地数据库
+import { createRouter, RouterProvider } from '@tanstack/react-router'  // 路由管理
 import { useEffect } from 'react'
-import { Toaster } from 'sonner'
+import { Toaster } from 'sonner' // 消息通知
 import { routeTree } from './route-tree.gen'
 
 import '@/assets/style/App.css'
 import '@/i18n'
 
-const router = createRouter({ routeTree })
+const router = createRouter({ routeTree })  // 创建路由实例
 
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
-}
+}  // 通过 TypeScript 的 declare module 扩展 TanStack Router 类型，让整个应用的路由跳转都有类型提示
 
 // 创建 IndexedDB 连接
 const getDB = () =>
   openDB('react-query-db', 1, {
-    upgrade(db) {
+    upgrade(db) {  // upgrade会在数据库第一次创建或版本升级时执行
       if (!db.objectStoreNames.contains('cache')) {
-        db.createObjectStore('cache')
+        db.createObjectStore('cache')  // 如果cache表不存在，就创建
       }
     },
   })
@@ -58,8 +58,8 @@ const persister = createAsyncStoragePersister({
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      staleTime: 5 * 60 * 1000,  // 5分钟内不重新获取数据，使用缓存
+      gcTime: 10 * 60 * 1000,  // 10分钟内清理缓存
     },
   },
 })

@@ -1,13 +1,13 @@
 import { ReactNode, Dispatch, SetStateAction } from 'react'
 
 // Types
-export interface Session {
-  id: string
-  title: string
-  created_at: string
-  updated_at: string
-  model: string
-  provider: string
+export interface Session {  // 会话类型
+  id: string  // 会话ID
+  title: string  // 会话标题
+  created_at: string  // 会话创建时间
+  updated_at: string  // 会话更新时间
+  model: string  // 会话模型
+  provider: string  // 模型提供商
 }
 
 export interface Message {
@@ -22,27 +22,27 @@ export interface Model {
   model: string
 }
 
-export interface ChatInterfaceProps {
-  canvasId: string
-  sessionList: Session[]
-  setSessionList: Dispatch<SetStateAction<Session[]>>
-  sessionId: string
+export interface ChatInterfaceProps { // 聊天界面组件属性
+  canvasId: string  // 画布ID
+  sessionList: Session[]  // 会话列表
+  setSessionList: Dispatch<SetStateAction<Session[]>>  // 状态更新函数
+  sessionId: string  // 当前会话ID
 }
 
-export interface ButtonProps {
-  children: ReactNode
-  variant?:
-    | 'default'
-    | 'destructive'
-    | 'outline'
-    | 'secondary'
-    | 'ghost'
-    | 'link'
-  size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon'
-  className?: string
-  onClick?: () => void
-  disabled?: boolean
-  asChild?: boolean
+export interface ButtonProps {  // 按钮组件属性
+  children: ReactNode  // 子组件
+  variant?:  // 6种按钮样式变体
+  | 'default'
+  | 'destructive'
+  | 'outline'
+  | 'secondary'
+  | 'ghost'
+  | 'link'
+  size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon'  // 5种按钮尺寸选项
+  className?: string  // 类名
+  onClick?: () => void  // 点击事件
+  disabled?: boolean  // 是否禁用
+  asChild?: boolean  // 是否作为子组件
 }
 
 // Chat Components
@@ -100,6 +100,6 @@ export declare const useDebounce: (callback: any, delay: number) => any
 export declare const useTheme: () => any
 
 // Utils
-export declare const cn: (...classes: any[]) => string
-export declare const eventBus: any
-export declare const formatDate: (date: string | Date) => string
+export declare const cn: (...classes: any[]) => string  // 类名合并工具
+export declare const eventBus: any  // 事件总线
+export declare const formatDate: (date: string | Date) => string  // 日期格式化工具

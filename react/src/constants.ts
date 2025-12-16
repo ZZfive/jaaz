@@ -1,11 +1,11 @@
-import type { LLMConfig, ToolCallFunctionName } from '@/types/types'
+import type { LLMConfig, ToolCallFunctionName } from '@/types/types' // 模型配置和工具调用函数名称类型
 
 // API Configuration
 export const BASE_API_URL =
-  import.meta.env.VITE_JAAZ_BASE_API_URL || 'https://jaaz.app'
+  import.meta.env.VITE_JAAZ_BASE_API_URL || 'https://jaaz.app'  // 基础API URL，从环境变量中获取，如果获取不到，则使用https://jaaz.app
 
-export const PROVIDER_NAME_MAPPING: {
-  [key: string]: { name: string; icon: string }
+export const PROVIDER_NAME_MAPPING: {  // 模型提供商名称映射
+  [key: string]: { name: string; icon: string }  // 模型提供商名称和图标
 } = {
   jaaz: {
     name: 'Jaaz',
@@ -44,16 +44,17 @@ export const PROVIDER_NAME_MAPPING: {
 
 // Tool call name mapping
 export const TOOL_CALL_NAME_MAPPING: { [key in ToolCallFunctionName]: string } =
-  {
-    generate_image: 'Generate Image',
-    prompt_user_multi_choice: 'Prompt Multi-Choice',
-    prompt_user_single_choice: 'Prompt Single-Choice',
-    write_plan: 'Write Plan',
-    finish: 'Finish',
-  }
+{
+  generate_image: 'Generate Image',
+  prompt_user_multi_choice: 'Prompt Multi-Choice',
+  prompt_user_single_choice: 'Prompt Single-Choice',
+  write_plan: 'Write Plan',
+  finish: 'Finish',
+}
 
 export const LOGO_URL = 'https://jaaz.app/favicon.ico'
 
+// 默认系统提示词
 export const DEFAULT_SYSTEM_PROMPT = `You are a professional art design agent. You can write very professional image prompts to generate aesthetically pleasing images that best fulfilling and matching the user's request.
 Step 1. write a design strategy plan. Write in the same language as the user's inital first prompt.
 
