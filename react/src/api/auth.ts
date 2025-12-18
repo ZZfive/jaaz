@@ -95,7 +95,7 @@ export async function getAuthStatus(): Promise<AuthStatus> {
   const userInfo = localStorage.getItem('jaaz_user_info')
 
   console.log('Getting auth status:', {
-    hasToken: !!token,
+    hasToken: !!token,  // 双重否定运算符，将任意值强制转换为布尔类型
     hasUserInfo: !!userInfo,
     userInfo: userInfo ? JSON.parse(userInfo) : null,
   })
@@ -200,20 +200,20 @@ export async function authenticatedFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = getAccessToken()
+  const token = getAccessToken()  // 获取access token
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
+    ...((options.headers as Record<string, string>) || {}),  // 合并headers
   }
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+  if (token) {  // 如果token存在，则添加Authorization头
+    headers['Authorization'] = `Bearer ${token}`  // 添加Authorization头
   }
 
   return fetch(url, {
-    ...options,
-    headers,
+    ...options,  // 展开所有原始配置
+    headers,  // 添加headers
   })
 }
 

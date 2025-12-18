@@ -76,14 +76,14 @@ export type LLMConfig = {
   is_custom?: boolean
 }
 
-export interface AppStateWithVideos extends AppState {
+export interface AppStateWithVideos extends AppState {  // 扩展AppState，添加视频元素，相当于继承AppState类
   videoElements?: any[]
 }
 
 export type CanvasData = {
-  elements: Readonly<OrderedExcalidrawElement[]>
-  appState: AppStateWithVideos
-  files: BinaryFiles
+  elements: Readonly<OrderedExcalidrawElement[]>  // 只读的OrderedExcalidrawElement数组
+  appState: AppStateWithVideos  // 扩展AppState，添加视频元素
+  files: BinaryFiles  // 二进制文件数组
 }
 
 export type Session = {

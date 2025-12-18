@@ -9,11 +9,13 @@ export type ListCanvasesResponse = {
   created_at: string
 }
 
+// 列出所有画布
 export async function listCanvases(): Promise<ListCanvasesResponse[]> {
   const response = await fetch('/api/canvas/list')
   return await response.json()
 }
 
+// 创建画布
 export async function createCanvas(data: {
   name: string
   canvas_id: string
@@ -32,10 +34,11 @@ export async function createCanvas(data: {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-  })
-  return await response.json()
+  })  // 调用后端创建画布接口
+  return await response.json()  // 返回创建画布接口的响应
 }
 
+// 获取画布
 export async function getCanvas(
   id: string
 ): Promise<{ data: CanvasData; name: string; sessions: Session[] }> {
@@ -43,6 +46,7 @@ export async function getCanvas(
   return await response.json()
 }
 
+// 保存画布
 export async function saveCanvas(
   id: string,
   payload: {
@@ -58,6 +62,7 @@ export async function saveCanvas(
   return await response.json()
 }
 
+// 重命名画布
 export async function renameCanvas(id: string, name: string): Promise<void> {
   const response = await fetch(`/api/canvas/${id}/rename`, {
     method: 'POST',
@@ -67,6 +72,7 @@ export async function renameCanvas(id: string, name: string): Promise<void> {
   return await response.json()
 }
 
+// 删除画布
 export async function deleteCanvas(id: string): Promise<void> {
   const response = await fetch(`/api/canvas/${id}/delete`, {
     method: 'DELETE',
